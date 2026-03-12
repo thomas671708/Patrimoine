@@ -1,0 +1,756 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Patrimoine · Thomas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Manrope:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #08080f;
+  --bg2:    #0f0f1a;
+  --bg3:    #161622;
+  --bg4:    #1e1e2e;
+  --border: rgba(255,255,255,0.06);
+  --text:   #eeeef8;
+  --text2:  #9898b8;
+  --text3:  #565670;
+  --cyan:   #5ee7df;
+  --blue:   #4d9fff;
+  --blue2:  #2563eb;
+  --purple: #a78bfa;
+  --green:  #4ade80;
+  --red:    #f87171;
+  --yellow: #fbbf24;
+  --orange: #fb923c;
+  --font-d: 'Syne', sans-serif;
+  --font-m: 'Manrope', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-m); }
+
+/* Stars bg */
+#stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle var(--d) ease-in-out infinite alternate; opacity: var(--o); }
+@keyframes twinkle { from { opacity: var(--o); } to { opacity: calc(var(--o) * 0.2); } }
+
+#app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100dvh; }
+#content { flex: 1; overflow-y: auto; padding: 20px 16px 8px; -webkit-overflow-scrolling: touch; }
+#content::-webkit-scrollbar { display: none; }
+
+/* NAV */
+#nav { display: flex; background: var(--bg2); border-top: 1px solid var(--border); padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 0px)); gap: 4px; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px; border: none; background: none; color: var(--text3); cursor: pointer; border-radius: 12px; transition: all 0.2s; }
+.nav-btn.active { color: var(--cyan); background: rgba(94,231,223,0.07); }
+.nav-icon { font-size: 19px; }
+.nav-label { font-size: 9px; font-weight: 700; letter-spacing: 0.05em; font-family: var(--font-m); }
+
+/* CARDS */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 12px; animation: up 0.3s cubic-bezier(.4,0,.2,1) both; }
+.card:nth-child(2) { animation-delay:.05s }
+.card:nth-child(3) { animation-delay:.1s }
+.card:nth-child(4) { animation-delay:.15s }
+.card:nth-child(5) { animation-delay:.2s }
+.card:nth-child(6) { animation-delay:.25s }
+@keyframes up { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.card-title { font-size: 9px; letter-spacing: 0.18em; color: var(--text3); font-weight: 700; font-family: var(--font-mono); margin-bottom: 14px; text-transform: uppercase; }
+
+/* ROWS */
+.row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: none; }
+.row-left { display: flex; align-items: center; gap: 10px; }
+.row-name { font-size: 13px; font-weight: 600; color: var(--text2); }
+.row-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.row-val { font-size: 15px; font-weight: 900; font-family: var(--font-d); color: var(--text); cursor: pointer; border-bottom: 1px dashed var(--text3); transition: color .15s; }
+.row-val:active { color: var(--cyan); }
+
+/* BARS */
+.bar-wrap { margin-bottom: 12px; }
+.bar-wrap:last-child { margin-bottom: 0; }
+.bar-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.bar-name { font-size: 11px; font-weight: 700; color: var(--text2); }
+.bar-val { font-size: 11px; color: var(--text3); font-family: var(--font-mono); }
+.bar-track { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width .9s cubic-bezier(.4,0,.2,1); }
+
+/* JALON */
+.jalon { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.jalon:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
+.jalon-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.jalon-name { font-size: 13px; font-weight: 900; font-family: var(--font-d); }
+.jalon-rente { font-size: 20px; font-weight: 900; font-family: var(--font-d); }
+.jalon-track { height: 5px; background: var(--bg4); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.jalon-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+.jalon-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); font-family: var(--font-mono); }
+
+/* SAISIE */
+#overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(10px); z-index: 100; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .25s; }
+#overlay.show { opacity: 1; pointer-events: all; }
+.sheet { background: var(--bg2); border-radius: 26px 26px 0 0; border: 1px solid var(--border); border-bottom: none; padding: 28px 20px 36px; width: 100%; }
+.sheet-title { font-size: 20px; font-weight: 900; font-family: var(--font-d); margin-bottom: 4px; }
+.sheet-hint { font-size: 12px; color: var(--text3); margin-bottom: 22px; font-family: var(--font-mono); }
+#field { width: 100%; background: var(--bg3); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px; font-size: 28px; font-family: var(--font-d); font-weight: 900; color: var(--cyan); outline: none; -webkit-appearance: none; transition: border-color .2s; }
+#field:focus { border-color: var(--cyan); }
+.btns { display: flex; gap: 10px; margin-top: 14px; }
+.btn { flex: 1; padding: 15px; border-radius: 14px; border: none; font-size: 15px; font-weight: 900; font-family: var(--font-d); cursor: pointer; }
+.btn-cancel { background: var(--bg4); color: var(--text3); }
+.btn-ok { background: var(--cyan); color: var(--bg); }
+
+/* SAISIE GLOBALE MODALE */
+#modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .25s; }
+#modalOverlay.show { opacity: 1; pointer-events: all; }
+.modal-sheet { background: var(--bg2); border-radius: 26px 26px 0 0; border: 1px solid var(--border); border-bottom: none; padding: 24px 20px 36px; width: 100%; max-height: 90dvh; overflow-y: auto; }
+.modal-sheet::-webkit-scrollbar { display: none; }
+.modal-title { font-size: 22px; font-weight: 900; font-family: var(--font-d); margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 20px; }
+.modal-group { margin-bottom: 18px; }
+.modal-group-title { font-size: 9px; letter-spacing: .15em; color: var(--text3); font-weight: 700; font-family: var(--font-mono); margin-bottom: 10px; text-transform: uppercase; }
+.modal-field-wrap { margin-bottom: 10px; }
+.modal-field-label { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.modal-field-label span { color: var(--text3); font-family: var(--font-mono); font-weight: 400; }
+.modal-field { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 16px; font-family: var(--font-d); font-weight: 700; color: var(--cyan); outline: none; -webkit-appearance: none; }
+.modal-field:focus { border-color: var(--cyan); }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div id="app">
+  <div id="content"></div>
+  <nav id="nav">
+    <button class="nav-btn active" onclick="setView('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">💼</span><span class="nav-label">Patrimoine</span>
+    </button>
+    <button class="nav-btn" onclick="setView('fire')" id="nav-fire">
+      <span class="nav-icon">🔥</span><span class="nav-label">FIRE</span>
+    </button>
+    <button class="nav-btn" onclick="setView('historique')" id="nav-historique">
+      <span class="nav-icon">📈</span><span class="nav-label">Historique</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Input rapide -->
+<div id="overlay" onclick="handleBg(event)">
+  <div class="sheet">
+    <div class="sheet-title" id="fieldName">Montant</div>
+    <div class="sheet-hint" id="fieldHint">Valeur actuelle</div>
+    <input type="number" inputmode="decimal" id="field" placeholder="0">
+    <div class="btns">
+      <button class="btn btn-cancel" onclick="closeInput()">Annuler</button>
+      <button class="btn btn-ok" onclick="confirmInput()">Valider ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Saisie mensuelle globale -->
+<div id="modalOverlay" onclick="handleModalBg(event)">
+  <div class="modal-sheet" id="modalSheet"></div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const DEFAULTS = {
+  lastUpdate: 'Jan 2026',
+  banques: {
+    bforbank:  { label:'BforBank',        value:0 },
+    boursoCC:  { label:'CC BoursoBank',   value:4.23 },
+    boursoLDD: { label:'LDD BoursoBank',  value:366 },
+    cicCC:     { label:'CC CIC',          value:381 },
+    cicLivA:   { label:'Livret A CIC',    value:3099 },
+    n26:       { label:'CC N26',          value:462 },
+    hellobank: { label:'Hellobank',       value:0 },
+    trCC:      { label:'CC Trade Rep',    value:240 },
+  },
+  actions: {
+    av:        { label:'AV Groupama',     value:288 },
+    epSal:     { label:'Épargne salariale (PEE+PERCOL)', value:15472 },
+    cto:       { label:'CTO',             value:19.57 },
+    pe:        { label:'Private Equity',  value:202.37 },
+  },
+  pea: {
+    cw8:    { label:'CW8 · Amundi World', value:7475,  isWorld:true,  color:'#63b3ed' },
+    wpea:   { label:'WPEA · iShares World',value:5799, isWorld:true,  color:'#4299e1' },
+    france: { label:'France · iShares',   value:1609,  isWorld:false, color:'#a78bfa' },
+    sp500:  { label:'S&P500 · BNP',       value:1884,  isWorld:false, color:'#f6ad55' },
+    tech:   { label:'US Tech · Amundi',   value:653,   isWorld:false, color:'#fc8181' },
+    em:     { label:'EM · PAEEM',         value:0,     isWorld:false, color:'#76e4f7' },
+  },
+  crypto: {
+    btc: { label:'Crypto Trade Republic', value:7327 },
+  },
+  history: [
+    {date:'Sep 24',total:32718},{date:'Oct 24',total:33127},
+    {date:'Nov 24',total:38397},{date:'Déc 24',total:38709},
+    {date:'Jan 25',total:37430},{date:'Fév 25',total:39325},
+    {date:'Mar 25',total:32904},{date:'Avr 25',total:32411},
+    {date:'Mai 25',total:40964},{date:'Jul 25',total:42426},
+    {date:'Aoû 25',total:44585},{date:'Oct 25',total:46655},
+    {date:'Déc 25',total:43208},{date:'Jan 26',total:45014},
+  ],
+};
+
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPA_URL = 'https://hdpexpeoktfijcegxpua.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkcGV4cGVva3RmaWpjZWd4cHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMzczMjUsImV4cCI6MjA4ODkxMzMyNX0.hQnglDt1nhg0D0Dz_zpJ6KS81OrDraay8fzbdtC9kWE';
+
+async function supaFetch(path, opts={}) {
+  const res = await fetch(SUPA_URL+'/rest/v1/'+path, {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer '+SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal', ...opts.headers },
+    ...opts
+  });
+  if (!res.ok) { const t=await res.text(); throw new Error(t); }
+  try { return await res.json(); } catch { return null; }
+}
+
+async function loadFromCloud() {
+  try {
+    const rows = await supaFetch('snapshots?order=date.desc&limit=1');
+    if (rows && rows.length) return rows[0].data;
+  } catch(e) { console.warn('Cloud load failed', e); }
+  return null;
+}
+
+async function saveToCloud(s) {
+  const date = new Date().toISOString().slice(0,10);
+  try {
+    await supaFetch('snapshots', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ date, data: s })
+    });
+  } catch(e) { console.warn('Cloud save failed', e); }
+  // Fallback local toujours
+  localStorage.setItem('pat3', JSON.stringify(s));
+}
+
+let state = JSON.parse(JSON.stringify(DEFAULTS));
+let view = 'dashboard';
+let inputKey = null;
+let cloudLoaded = false;
+
+function loadState() {
+  try { const s=localStorage.getItem('pat3'); return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULTS)); }
+  catch { return JSON.parse(JSON.stringify(DEFAULTS)); }
+}
+function save() {
+  localStorage.setItem('pat3', JSON.stringify(state));
+  saveToCloud(state).catch(()=>{});
+}
+
+async function initState() {
+  // Afficher d'abord les données locales
+  state = loadState();
+  render();
+  showSyncStatus('⏳ Sync cloud…');
+  // Puis charger depuis Supabase
+  try {
+    const cloud = await loadFromCloud();
+    if (cloud) {
+      // Merger : garder l'historique le plus long
+      if (cloud.history && cloud.history.length >= (state.history||[]).length) {
+        state = { ...state, ...cloud };
+      }
+      cloudLoaded = true;
+      showSyncStatus('☁️ Sync OK', 2000);
+      render();
+    } else {
+      showSyncStatus('📱 Local only', 1500);
+    }
+  } catch {
+    showSyncStatus('⚠️ Offline', 2000);
+  }
+}
+
+function showSyncStatus(msg, hideAfter=0) {
+  let el = document.getElementById('syncBadge');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'syncBadge';
+    el.style.cssText = 'position:fixed;top:12px;right:14px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:10px;font-family:var(--font-mono);color:var(--text3);z-index:500;transition:opacity .4s';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  if (hideAfter) setTimeout(()=>{ el.style.opacity='0'; }, hideAfter);
+}
+
+// ─── CALCULS ──────────────────────────────────────────────────────────────────
+const fmt = v => {
+  if (v===null||v===undefined) return '—';
+  const n = Math.round(Math.abs(v)).toLocaleString('fr-FR');
+  return (v<0?'-':'')+n+'€';
+};
+const pct = (a,b) => b>0 ? Math.min((a/b)*100,100) : 0;
+
+function getPEA()     { return Object.values(state.pea).reduce((s,e)=>s+e.value,0); }
+function getBanques() { return Object.values(state.banques).reduce((s,a)=>s+a.value,0); }
+function getCrypto()  { return Object.values(state.crypto).reduce((s,a)=>s+a.value,0); }
+function getActions() {
+  return Object.values(state.actions).reduce((s,a)=>s+a.value,0) + getPEA();
+}
+function getTotal()   { return getBanques() + getActions() + getCrypto(); }
+function getWorld()   {
+  const peaW = Object.values(state.pea).filter(e=>e.isWorld).reduce((s,e)=>s+e.value,0);
+  return peaW + state.actions.epSal.value;
+}
+function getEM()      { return state.pea.em.value; }
+function rente(cap)   { return cap*0.04*(1-0.6*0.172)/12; }
+
+function todayLabel() {
+  return new Date().toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});
+}
+function pushHistory() {
+  const d = todayLabel();
+  const t = getTotal();
+  state.history = state.history.filter(h=>h.date!==d);
+  state.history.push({date:d,total:t});
+  if (state.history.length>36) state.history=state.history.slice(-36);
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function setView(v) {
+  view = v;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('nav-'+v).classList.add('active');
+  render();
+}
+function render() {
+  const el = document.getElementById('content');
+  el.innerHTML = '';
+  if (view==='dashboard') renderDashboard(el);
+  else if (view==='fire') renderFire(el);
+  else renderHistorique(el);
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard(el) {
+  const total = getTotal();
+  const banqT = getBanques();
+  const actT  = getActions();
+  const cryptT= getCrypto();
+  const peaT  = getPEA();
+  const worldT= getWorld();
+  const emT   = getEM();
+  const allocT= worldT+emT;
+
+  // Header + bouton saisie
+  const hd = document.createElement('div');
+  hd.style.cssText='display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px';
+  hd.innerHTML=`
+    <div>
+      <div style="font-size:24px;font-weight:900;font-family:var(--font-d);letter-spacing:-0.5px">Patrimoine</div>
+      <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">màj · ${state.lastUpdate}</div>
+    </div>
+    <button onclick="openModal()" style="background:var(--cyan);color:var(--bg);border:none;border-radius:12px;padding:10px 16px;font-size:12px;font-weight:900;font-family:var(--font-d);cursor:pointer;display:flex;align-items:center;gap:6px">
+      ✎ Saisir
+    </button>
+  `;
+  el.appendChild(hd);
+
+  // Total card avec donut
+  const totalCard = document.createElement('div');
+  totalCard.className = 'card';
+  const segs = [
+    {label:'Actions', val:actT,  color:'#4d9fff'},
+    {label:'Crypto',  val:cryptT,color:'#fbbf24'},
+    {label:'Banques', val:banqT, color:'#4ade80'},
+  ].filter(s=>s.val>0);
+  const sumSegs = segs.reduce((s,x)=>s+x.val,0);
+  let cumA=-90, paths='';
+  const cx=55,cy=55,r=46,ri=30;
+  segs.forEach(seg=>{
+    const ang=(seg.val/sumSegs)*360;
+    const s1=cumA*Math.PI/180, e1=(cumA+ang)*Math.PI/180;
+    const lg=ang>180?1:0;
+    const x1=cx+r*Math.cos(s1),y1=cy+r*Math.sin(s1);
+    const x2=cx+r*Math.cos(e1),y2=cy+r*Math.sin(e1);
+    const xi1=cx+ri*Math.cos(s1),yi1=cy+ri*Math.sin(s1);
+    const xi2=cx+ri*Math.cos(e1),yi2=cy+ri*Math.sin(e1);
+    paths+=`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${lg},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi2.toFixed(1)},${yi2.toFixed(1)} A${ri},${ri} 0 ${lg},0 ${xi1.toFixed(1)},${yi1.toFixed(1)} Z" fill="${seg.color}" opacity="0.85"/>`;
+    cumA+=ang;
+  });
+  totalCard.innerHTML=`
+    <div style="display:flex;align-items:center;gap:16px">
+      <svg viewBox="0 0 110 110" width="100" height="100" style="flex-shrink:0">
+        ${paths}
+        <text x="55" y="51" text-anchor="middle" font-size="12" fill="#eeeef8" font-family="Syne,sans-serif" font-weight="900">${Math.round(total/1000)}k</text>
+        <text x="55" y="63" text-anchor="middle" font-size="7" fill="#565670" font-family="DM Mono,monospace">TOTAL</text>
+      </svg>
+      <div style="flex:1">
+        <div style="font-size:36px;font-weight:900;font-family:var(--font-d);color:var(--cyan);line-height:1;margin-bottom:4px">${fmt(total)}</div>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">
+          ${segs.map(s=>`
+            <div style="display:flex;align-items:center;gap:7px">
+              <div style="width:8px;height:8px;border-radius:2px;background:${s.color};flex-shrink:0"></div>
+              <div style="font-size:11px;color:var(--text2);font-weight:600;flex:1">${s.label}</div>
+              <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">${Math.round(s.val/total*100)}% · ${fmt(s.val)}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  el.appendChild(totalCard);
+
+  // Allocation World/EM
+  const worldPct = allocT>0?Math.round(worldT/allocT*100):0;
+  const emPct    = allocT>0?Math.round(emT/allocT*100):0;
+  const allocCard = document.createElement('div');
+  allocCard.className = 'card';
+  allocCard.innerHTML=`
+    <div class="card-title">ALLOCATION ACTIONS · CIBLE 80/20</div>
+    <div class="bar-wrap">
+      <div class="bar-header">
+        <div class="bar-name">🌍 MSCI World <span style="color:var(--text3);font-size:10px">(cible 80%)</span></div>
+        <div class="bar-val">${worldPct}% · ${fmt(worldT)}</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${worldPct}%;background:linear-gradient(90deg,var(--blue2),var(--blue))"></div></div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar-header">
+        <div class="bar-name">🌏 Emerging Markets <span style="color:var(--text3);font-size:10px">(cible 20%)</span></div>
+        <div class="bar-val">${emPct}% · ${fmt(emT)}</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${emPct}%;background:linear-gradient(90deg,#0e7490,var(--cyan))"></div></div>
+    </div>
+    ${emT===0?`<div style="font-size:10px;color:var(--orange);margin-top:8px;font-family:var(--font-mono)">⚡ Accumuler PAEEM pour atteindre 20% EM</div>`:''}
+    ${emPct>0&&emPct<20?`<div style="font-size:10px;color:var(--cyan);margin-top:8px;font-family:var(--font-mono)">→ Encore ${fmt(worldT*0.25-emT)} à investir en EM pour atteindre 20%</div>`:''}
+  `;
+  el.appendChild(allocCard);
+
+  // PEA détaillé
+  const peaCard = document.createElement('div');
+  peaCard.className = 'card';
+  peaCard.innerHTML=`<div class="card-title">PEA BOURSOBANK · ${fmt(peaT)}</div>`;
+  Object.entries(state.pea).forEach(([k,etf])=>{
+    const row=document.createElement('div');
+    row.className='row';
+    const badge = etf.isWorld
+      ? `<span style="font-size:9px;color:${etf.color};font-family:var(--font-mono);margin-top:1px">≡ World</span>`
+      : k==='em'
+        ? `<span style="font-size:9px;color:${etf.color};font-family:var(--font-mono);margin-top:1px">EM</span>`
+        : `<span style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:1px">hors stratégie</span>`;
+    row.innerHTML=`
+      <div class="row-left">
+        <div style="width:7px;height:7px;border-radius:2px;background:${etf.color};flex-shrink:0"></div>
+        <div>
+          <div class="row-name">${etf.label}</div>
+          ${badge}
+        </div>
+      </div>
+      <div class="row-val" onclick="openInput('pea_${k}')">${fmt(etf.value)}</div>
+    `;
+    peaCard.appendChild(row);
+  });
+  el.appendChild(peaCard);
+
+  // Épargne & autres
+  const actCard = document.createElement('div');
+  actCard.className='card';
+  actCard.innerHTML=`<div class="card-title">ÉPARGNE & INVESTISSEMENTS · ${fmt(getActions()-peaT)}</div>`;
+  Object.entries(state.actions).forEach(([k,a])=>{
+    const row=document.createElement('div');
+    row.className='row';
+    row.innerHTML=`<div class="row-name">${a.label}</div><div class="row-val" onclick="openInput('act_${k}')">${fmt(a.value)}</div>`;
+    actCard.appendChild(row);
+  });
+  el.appendChild(actCard);
+
+  // Comptes bancaires
+  const banqCard=document.createElement('div');
+  banqCard.className='card';
+  banqCard.innerHTML=`<div class="card-title">COMPTES BANCAIRES · ${fmt(banqT)}</div>`;
+  Object.entries(state.banques).forEach(([k,a])=>{
+    const row=document.createElement('div');
+    row.className='row';
+    row.innerHTML=`<div class="row-name">${a.label}</div><div class="row-val" onclick="openInput('banq_${k}')">${fmt(a.value)}</div>`;
+    banqCard.appendChild(row);
+  });
+  el.appendChild(banqCard);
+
+  // Crypto
+  const cryptoCard=document.createElement('div');
+  cryptoCard.className='card';
+  const cryptoPct=total>0?Math.round(getCrypto()/total*100):0;
+  const isOver=cryptoPct>15;
+  cryptoCard.innerHTML=`
+    <div class="card-title">CRYPTO · ${fmt(getCrypto())}</div>
+    <div class="row">
+      <div>
+        <div class="row-name">${state.crypto.btc.label}</div>
+        <div style="font-size:10px;margin-top:2px;color:${isOver?'var(--orange)':'var(--text3)'}">
+          ${cryptoPct}% du patrimoine ${isOver?'⚠️ > 15%':'✓ < 15%'}
+        </div>
+      </div>
+      <div class="row-val" onclick="openInput('crypto_btc')">${fmt(state.crypto.btc.value)}</div>
+    </div>
+  `;
+  el.appendChild(cryptoCard);
+}
+
+// ─── FIRE ─────────────────────────────────────────────────────────────────────
+function renderFire(el) {
+  const total = getTotal();
+
+  const hd=document.createElement('div');
+  hd.style.cssText='margin-bottom:20px';
+  hd.innerHTML=`<div style="font-size:24px;font-weight:900;font-family:var(--font-d)">FIRE</div><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">liberté financière · règle des 4%</div>`;
+  el.appendChild(hd);
+
+  // Rente actuelle
+  const renteCard=document.createElement('div');
+  renteCard.className='card';
+  const renteM=rente(total);
+  renteCard.innerHTML=`
+    <div class="card-title">TA RENTE AUJOURD'HUI</div>
+    <div style="text-align:center;padding:10px 0 18px">
+      <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);letter-spacing:.1em;margin-bottom:8px">SI TU RETIRAIS 4% PAR AN</div>
+      <div style="font-size:56px;font-weight:900;font-family:var(--font-d);color:var(--cyan);line-height:1">${Math.round(renteM).toLocaleString('fr-FR')}€</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">/ mois net · sur ${fmt(total)}</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;font-family:var(--font-mono);font-size:11px;color:var(--text3);line-height:2.2">
+      <div style="display:flex;justify-content:space-between"><span>Retrait brut 4%/an</span><span style="color:var(--text);font-weight:700">${Math.round(total*0.04).toLocaleString('fr-FR')}€</span></div>
+      <div style="display:flex;justify-content:space-between"><span>PS sur PV (17,2% × 60%)</span><span style="color:var(--red)">−${Math.round(total*0.04*0.6*0.172).toLocaleString('fr-FR')}€</span></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:2px">
+        <span style="color:var(--text);font-weight:700">Net mensuel</span>
+        <span style="color:var(--cyan);font-weight:800">${Math.round(renteM).toLocaleString('fr-FR')}€</span>
+      </div>
+    </div>
+  `;
+  el.appendChild(renteCard);
+
+  // Jalons
+  const msCard=document.createElement('div');
+  msCard.className='card';
+  msCard.innerHTML=`
+    <div class="card-title">JALONS · RENTE NETTE / MOIS</div>
+    <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:16px">PEA après 5 ans : IR=0% · PS=17,2% sur plus-values</div>
+  `;
+  [
+    {label:'50 000€',          val:50000,   color:'#63b3ed',desc:'Premier cap'},
+    {label:'100 000€',         val:100000,  color:'#a78bfa',desc:'Club des 6 chiffres'},
+    {label:'250 000€',         val:250000,  color:'#f6e05e',desc:'Quart de million'},
+    {label:'500 000€',         val:500000,  color:'#f6ad55',desc:'Demi-millionnaire'},
+    {label:'1 000 000€',       val:1000000, color:'#fc8181',desc:'Millionnaire'},
+    {label:'FIRE · 1 600 000€',val:1600000, color:'#76e4f7',desc:'Indépendance financière'},
+  ].forEach((m,i,arr)=>{
+    const reached=total>=m.val;
+    const p=pct(total,m.val);
+    const remaining=Math.max(m.val-total,0);
+    const r=Math.round(rente(m.val));
+    const isLast=i===arr.length-1;
+
+    const j=document.createElement('div');
+    j.className='jalon';
+    if(isLast){j.style.paddingBottom='0';j.style.marginBottom='0';j.style.borderBottom='none';}
+
+    const atteint=reached?`<span style="font-size:9px;background:${m.color}20;color:${m.color};padding:2px 7px;border-radius:4px;margin-left:6px;font-weight:700">✓</span>`:'';
+    const restant=reached?'atteint 🎯':'encore '+remaining.toLocaleString('fr-FR')+'€';
+
+    j.innerHTML=
+      '<div class="jalon-top">'+
+        '<div>'+
+          '<div class="jalon-name" style="color:'+(reached?m.color:'var(--text)')+'">'+m.label+atteint+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);margin-top:2px">'+m.desc+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0;margin-left:14px">'+
+          '<div class="jalon-rente" style="color:'+m.color+'">'+r.toLocaleString('fr-FR')+'€</div>'+
+          '<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono)">/mois net</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="jalon-track"><div class="jalon-fill" style="width:'+p.toFixed(1)+'%;background:linear-gradient(90deg,'+m.color+'55,'+m.color+')"></div></div>'+
+      '<div class="jalon-meta"><span>'+p.toFixed(1)+'%</span><span>'+restant+'</span></div>';
+    msCard.appendChild(j);
+  });
+  el.appendChild(msCard);
+
+  const note=document.createElement('div');
+  note.style.cssText='font-size:10px;color:var(--text3);font-family:var(--font-mono);padding:0 4px;margin-bottom:16px;line-height:1.8';
+  note.textContent='Règle des 4% (Bengen 1994). PEA après 5 ans : IR=0%, PS=17,2% sur 60% de gains estimés.';
+  el.appendChild(note);
+}
+
+// ─── HISTORIQUE ───────────────────────────────────────────────────────────────
+function renderHistorique(el) {
+  const hd=document.createElement('div');
+  hd.style.cssText='margin-bottom:20px';
+  hd.innerHTML=`<div style="font-size:24px;font-weight:900;font-family:var(--font-d)">Historique</div><div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${state.history.length} points de données</div>`;
+  el.appendChild(hd);
+
+  if (!state.history.length) {
+    const c=document.createElement('div');
+    c.className='card';
+    c.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">Pas encore de données.<br>Saisis tes comptes régulièrement.</div>';
+    el.appendChild(c);
+    return;
+  }
+
+  // Bar chart
+  const chartCard=document.createElement('div');
+  chartCard.className='card';
+  chartCard.innerHTML='<div class="card-title">ÉVOLUTION DU PATRIMOINE</div>';
+  const hist=state.history.slice(-12);
+  const maxH=Math.max(...hist.map(h=>h.total));
+  const barWrap=document.createElement('div');
+  barWrap.style.cssText='display:flex;align-items:flex-end;gap:5px;height:90px;margin-bottom:10px';
+  hist.forEach((h,i,arr)=>{
+    const hpct=(h.total/maxH)*88;
+    const prev=arr[i-1];
+    const isUp=!prev||h.total>=prev.total;
+    const col=document.createElement('div');
+    col.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%';
+    col.innerHTML=`
+      <div style="width:100%;height:${hpct}%;background:${isUp?'linear-gradient(to top,var(--blue2),var(--cyan))':'linear-gradient(to top,#7f1d1d,var(--red))'};border-radius:3px 3px 0 0;min-height:3px;transition:height .6s"></div>
+      <div style="font-size:7px;color:var(--text3);font-family:var(--font-mono);text-align:center;line-height:1.2">${h.date}</div>
+    `;
+    barWrap.appendChild(col);
+  });
+  chartCard.appendChild(barWrap);
+  el.appendChild(chartCard);
+
+  // Tableau
+  const tableCard=document.createElement('div');
+  tableCard.className='card';
+  tableCard.innerHTML='<div class="card-title">DÉTAIL</div>';
+  [...hist].reverse().forEach((h,i,arr)=>{
+    const prev=arr[i+1];
+    const diff=prev?h.total-prev.total:null;
+    const row=document.createElement('div');
+    row.className='row';
+    row.innerHTML=`
+      <div>
+        <div style="font-size:14px;font-weight:700;font-family:var(--font-d);color:var(--text2)">${h.date}</div>
+        ${diff!==null?`<div style="font-size:10px;color:${diff>=0?'var(--green)':'var(--red)'};font-family:var(--font-mono)">${diff>=0?'+':''}${Math.round(diff).toLocaleString('fr-FR')}€ vs avant</div>`:''}
+      </div>
+      <div style="font-size:18px;font-weight:900;font-family:var(--font-d);color:var(--text)">${fmt(h.total)}</div>
+    `;
+    tableCard.appendChild(row);
+  });
+  el.appendChild(tableCard);
+}
+
+// ─── INPUT RAPIDE (clic sur un montant) ───────────────────────────────────────
+function openInput(key) {
+  inputKey=key;
+  let name='', current=0;
+  if(key.startsWith('pea_'))   { const k=key.slice(4); name=state.pea[k].label;    current=state.pea[k].value; }
+  if(key.startsWith('act_'))   { const k=key.slice(4); name=state.actions[k].label; current=state.actions[k].value; }
+  if(key.startsWith('banq_'))  { const k=key.slice(5); name=state.banques[k].label; current=state.banques[k].value; }
+  if(key.startsWith('crypto_')){ const k=key.slice(7); name=state.crypto[k].label;  current=state.crypto[k].value; }
+  document.getElementById('fieldName').textContent=name;
+  document.getElementById('fieldHint').textContent='Valeur actuelle : '+fmt(current);
+  document.getElementById('field').value=current||'';
+  document.getElementById('overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('field').focus(),120);
+}
+function closeInput() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('field').value='';
+  inputKey=null;
+}
+function handleBg(e){ if(e.target===document.getElementById('overlay')) closeInput(); }
+function confirmInput() {
+  const val=parseFloat(document.getElementById('field').value.replace(',','.'));
+  if(isNaN(val)||val<0){closeInput();return;}
+  const key=inputKey;
+  if(key.startsWith('pea_'))   state.pea[key.slice(4)].value=val;
+  if(key.startsWith('act_'))   state.actions[key.slice(4)].value=val;
+  if(key.startsWith('banq_'))  state.banques[key.slice(5)].value=val;
+  if(key.startsWith('crypto_'))state.crypto[key.slice(7)].value=val;
+  finalize();
+}
+document.getElementById('field').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmInput(); });
+
+// ─── SAISIE GLOBALE MODALE ────────────────────────────────────────────────────
+function openModal() {
+  const sheet=document.getElementById('modalSheet');
+  sheet.innerHTML=`
+    <div class="modal-title">Mise à jour mensuelle</div>
+    <div class="modal-sub">Saisis les nouvelles valeurs · laisse vide si inchangé</div>
+
+    <div class="modal-group">
+      <div class="modal-group-title">📈 PEA BoursoBank</div>
+      ${Object.entries(state.pea).map(([k,e])=>`
+        <div class="modal-field-wrap">
+          <div class="modal-field-label">${e.label}<span>${fmt(e.value)}</span></div>
+          <input class="modal-field" type="number" inputmode="decimal" placeholder="${e.value||0}" id="m_pea_${k}">
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="modal-group">
+      <div class="modal-group-title">💰 Épargne & investissements</div>
+      ${Object.entries(state.actions).map(([k,a])=>`
+        <div class="modal-field-wrap">
+          <div class="modal-field-label">${a.label}<span>${fmt(a.value)}</span></div>
+          <input class="modal-field" type="number" inputmode="decimal" placeholder="${a.value||0}" id="m_act_${k}">
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="modal-group">
+      <div class="modal-group-title">₿ Crypto</div>
+      ${Object.entries(state.crypto).map(([k,a])=>`
+        <div class="modal-field-wrap">
+          <div class="modal-field-label">${a.label}<span>${fmt(a.value)}</span></div>
+          <input class="modal-field" type="number" inputmode="decimal" placeholder="${a.value||0}" id="m_crypto_${k}">
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="modal-group">
+      <div class="modal-group-title">🏦 Comptes bancaires</div>
+      ${Object.entries(state.banques).map(([k,a])=>`
+        <div class="modal-field-wrap">
+          <div class="modal-field-label">${a.label}<span>${fmt(a.value)}</span></div>
+          <input class="modal-field" type="number" inputmode="decimal" placeholder="${a.value||0}" id="m_banq_${k}">
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="btns">
+      <button class="btn btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-ok" onclick="confirmModal()">Enregistrer ✓</button>
+    </div>
+  `;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('show'); }
+function handleModalBg(e){ if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+function confirmModal() {
+  const read=(id,fallback)=>{ const el=document.getElementById(id); if(!el||el.value==='') return fallback; const v=parseFloat(el.value.replace(',','.')); return isNaN(v)?fallback:v; };
+  Object.keys(state.pea).forEach(k    => { state.pea[k].value    = read('m_pea_'+k,    state.pea[k].value);    });
+  Object.keys(state.actions).forEach(k=> { state.actions[k].value= read('m_act_'+k,    state.actions[k].value); });
+  Object.keys(state.crypto).forEach(k => { state.crypto[k].value = read('m_crypto_'+k, state.crypto[k].value); });
+  Object.keys(state.banques).forEach(k=> { state.banques[k].value= read('m_banq_'+k,   state.banques[k].value); });
+  closeModal();
+  finalize();
+}
+
+function finalize() {
+  state.lastUpdate = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+  pushHistory();
+  save();
+  closeInput();
+  render();
+}
+
+// ─── STARS ────────────────────────────────────────────────────────────────────
+function initStars() {
+  const el=document.getElementById('stars');
+  for(let i=0;i<50;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*1.8+0.4;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--d:${2+Math.random()*5}s;--o:${0.2+Math.random()*0.5};animation-delay:${Math.random()*5}s`;
+    el.appendChild(s);
+  }
+}
+
+initStars();
+initState();
+</script>
+</body>
+</html>
