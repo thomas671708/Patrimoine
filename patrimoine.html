@@ -273,7 +273,8 @@ function showSyncStatus(msg, hideAfter=0) {
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 const fmt = v => {
   if (v===null||v===undefined) return '—';
-  const n = Math.round(Math.abs(v)).toLocaleString('fr-FR');
+  const abs = Math.abs(v);
+  const n = abs % 1 === 0 ? abs.toLocaleString('fr-FR') : abs.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
   return (v<0?'-':'')+n+'€';
 };
 const pct = (a,b) => b>0 ? Math.min((a/b)*100,100) : 0;
