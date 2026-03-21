@@ -541,7 +541,7 @@ function editEntry(type, idx) {
   setTimeout(()=>document.getElementById('edit_montant')?.select(),120);
 }
 function confirmEdit(type, idx) {
-  const val = parseFloat(document.getElementById('edit_montant')?.value||0);
+  const val = parseFloat((document.getElementById('edit_montant')?.value||'0').replace(',','.'));
   if (isNaN(val)||val<0) { closeModal(); return; }
   getBudgetMonth(budgetMonth)[type][idx].montant = val;
   save(); closeModal(); render();
@@ -569,7 +569,7 @@ function openRembModal(cat) {
   document.getElementById('modalOverlay').classList.add('show');
 }
 function confirmRemb(cat) {
-  const montant = parseFloat(document.getElementById('remb_montant')?.value||0);
+  const montant = parseFloat((document.getElementById('remb_montant')?.value||'0').replace(',','.'))
   if (isNaN(montant)||montant<0) { closeModal(); return; }
   const note = document.getElementById('remb_note')?.value||'';
   const m = getBudgetMonth(budgetMonth);
@@ -696,7 +696,7 @@ function updateSousCats() {
   if (sel && cat && BUDGET_CATS[cat]) sel.innerHTML=BUDGET_CATS[cat].subs.map(s=>`<option>${s}</option>`).join('');
 }
 function confirmBudget() {
-  const montant=parseFloat(document.getElementById('bm_montant')?.value||0);
+  const montant=parseFloat((document.getElementById('bm_montant')?.value||'0').replace(',','.'));
   if (!montant||montant<=0){closeModal();return;}
   const note=document.getElementById('bm_note')?.value||'';
   const m=getBudgetMonth(budgetMonth);
