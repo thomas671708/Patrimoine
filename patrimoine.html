@@ -197,13 +197,14 @@ const SUPA_URL = 'https://hdpexpeoktfijcegxpua.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkcGV4cGVva3RmaWpjZWd4cHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMzczMjUsImV4cCI6MjA4ODkxMzMyNX0.hQnglDt1nhg0D0Dz_zpJ6KS81OrDraay8fzbdtC9kWE';
 
 async function supaFetch(path, opts={}) {
-const res = await fetch(SUPA_URL+'/rest/v1/'+path+'?apikey='+SUPA_KEY, {    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer '+SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal', ...opts.headers },
-    ...opts
-  });
-  if (!res.ok) { const t=await res.text(); throw new Error(t); }
-  try { return await res.json(); } catch { return null; }
+    const {headers: extraHeaders={}, ...restOpts} = opts;
+    const res = await fetch(SUPA_URL+'/rest/v1/'+path, {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer '+SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal', ...extraHeaders },
+          ...restOpts
+    });
+    if (!res.ok) { const t=await res.text(); throw new Error(t); }
+    try { return await res.json(); } catch { return null; }
 }
-
 async function loadFromCloud() {
   try {
     const rows = await supaFetch('snapshots?order=date.desc&limit=1');
