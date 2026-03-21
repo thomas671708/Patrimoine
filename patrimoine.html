@@ -134,16 +134,16 @@ select.modal-field { color: var(--cyan); }
 <script>
 // ─── CONSTANTES BUDGET ────────────────────────────────────────────────────────
 const BUDGET_CATS = {
-  voiture:      { label:'🚗 Voiture',      color:'#f6ad55', subs:['Prêt auto','Assurance','Essence','Péage','Entretien','Autre'] },
-  logement:     { label:'🏠 Logement',     color:'#63b3ed', subs:['Loyer','Électricité','Gaz','Internet','Assurance','Appart Lisa','Participation Loïc','Autre'] },
-  abonnements:  { label:'📱 Abonnements',  color:'#a78bfa', subs:['Apple','Fitness Park','Téléphone','SNCF','Frais CIC','ChatGPT','Claude','Autre'] },
-  alimentation: { label:'🛒 Alimentation', color:'#4ade80', subs:['Courses','Boulangerie','Autre'] },
-  bar_kif:      { label:'🍺 Bar / Kif',    color:'#fbbf24', subs:['Bar','Soirée','Autre'] },
-  resto:        { label:'🍽️ Resto',         color:'#fb923c', subs:['Resto','Autre'] },
-  au_travail:   { label:'💼 Au travail',   color:'#5ee7df', subs:['Cantine','Autre'] },
-  voyages:      { label:'✈️ Voyages',       color:'#f6e05e', subs:['Hôtel','Avion','Transport','Activité','Repas','Autre'] },
-  cadeaux:      { label:'🎁 Cadeaux',      color:'#fc8181', subs:['Cadeau','Autre'] },
-  rare:         { label:'🎲 Rare',          color:'#9898b8', subs:['Décathlon','Amende','Achat ponctuel','Autre'] },
+  voiture:      { label:'🚗 Voiture',      color:'#f6ad55', subs:['Prêt auto','Assurance','Essence','Péage','Entretien','Autre'], remb:false },
+  logement:     { label:'🏠 Logement',     color:'#63b3ed', subs:['Loyer Oberhausbergen','Électricité','Gaz','Internet','Assurance','Appart Lisa','Autre'], remb:true, rembLabel:'Participation Loïc' },
+  abonnements:  { label:'📱 Abonnements',  color:'#a78bfa', subs:['Apple','Fitness Park','Téléphone','SNCF','Frais CIC','ChatGPT','Claude','Autre'], remb:false },
+  alimentation: { label:'🛒 Alimentation', color:'#4ade80', subs:['Courses','Boulangerie','Autre'], remb:true, rembLabel:'Remboursement Lisa' },
+  bar_kif:      { label:'🍺 Bar / Kif',    color:'#fbbf24', subs:['Bar','Soirée','Autre'], remb:false },
+  resto:        { label:'🍽️ Resto',         color:'#fb923c', subs:['Resto','Autre'], remb:false },
+  au_travail:   { label:'💼 Au travail',   color:'#5ee7df', subs:['Cantine','Autre'], remb:false },
+  voyages:      { label:'✈️ Voyages',       color:'#f6e05e', subs:['Hôtel','Avion','Transport','Activité','Repas','Autre'], remb:true, rembLabel:'Remboursement amis' },
+  cadeaux:      { label:'🎁 Cadeaux',      color:'#fc8181', subs:['Cadeau','Autre'], remb:true, rembLabel:'Remboursement' },
+  rare:         { label:'🎲 Rare',          color:'#9898b8', subs:['Décathlon','Amende','Achat ponctuel','Autre'], remb:false },
 };
 const REVENUS_TYPES  = ['Salaire','Swile','Intérêts CC','Prime','Autre'];
 const INVEST_TYPES   = ['PEA BoursoBank','BTC récurrent','BTC perso','PEE/PERCOL','Autre'];
@@ -288,19 +288,22 @@ function getMonthLabel(key) {
 }
 function getBudgetMonth(key) {
   if (!state.budget) state.budget = {};
-  if (!state.budget[key]) state.budget[key] = { depenses:[], revenus:[], invests:[], ciel:[] };
+  if (!state.budget[key]) state.budget[key] = { depenses:[], revenus:[], invests:[], ciel:[], remboursements:[] };
+  if (!state.budget[key].remboursements) state.budget[key].remboursements = [];
   return state.budget[key];
 }
 function budgetStats(key) {
   const m = getBudgetMonth(key);
   const totalRevenu  = m.revenus.reduce((s,r)=>s+r.montant,0);
   const totalDepense = m.depenses.reduce((s,d)=>s+d.montant,0);
+  const totalRemb    = (m.remboursements||[]).reduce((s,r)=>s+r.montant,0);
+  const totalDepNette= totalDepense - totalRemb;
   const investPoche  = m.invests.reduce((s,i)=>s+i.montant,0);
   const totalCiel    = m.ciel.reduce((s,c)=>s+c.montant,0);
   const totalInvest  = investPoche + totalCiel;
-  const savings      = totalRevenu - totalDepense - investPoche;
+  const savings      = totalRevenu - totalDepNette - investPoche;
   const grind        = savings + totalInvest;
-  return { totalRevenu, totalDepense, investPoche, totalCiel, totalInvest, savings, grind };
+  return { totalRevenu, totalDepense, totalRemb, totalDepNette, investPoche, totalCiel, totalInvest, savings, grind };
 }
 
 // ─── PATRIMOINE CALCULS ───────────────────────────────────────────────────────
@@ -440,15 +443,16 @@ function renderBudget(el) {
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
-      ${[{l:'Revenus',v:s.totalRevenu,c:'var(--green)'},{l:'Dépenses',v:-s.totalDepense,c:'var(--red)'},{l:'Invest',v:s.investPoche,c:'var(--blue)'},{l:'Tombés ciel',v:s.totalCiel,c:'var(--yellow)'}].map(x=>`<div style="background:var(--bg3);border-radius:10px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:4px">${x.l}</div><div style="font-size:13px;font-weight:900;font-family:var(--font-d);color:${x.c}">${x.v>=0?'+':''}${Math.round(x.v).toLocaleString('fr-FR')}€</div></div>`).join('')}
-    </div>`;
+      ${[{l:'Revenus',v:s.totalRevenu,c:'var(--green)'},{l:'Dép. nettes',v:-s.totalDepNette,c:'var(--red)'},{l:'Invest',v:s.investPoche,c:'var(--blue)'},{l:'Tombés ciel',v:s.totalCiel,c:'var(--yellow)'}].map(x=>`<div style="background:var(--bg3);border-radius:10px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:4px">${x.l}</div><div style="font-size:13px;font-weight:900;font-family:var(--font-d);color:${x.c}">${x.v>=0?'+':''}${Math.round(x.v).toLocaleString('fr-FR')}€</div></div>`).join('')}
+    </div>
+    ${s.totalRemb>0?`<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:10px">↩ ${fmt(s.totalRemb)} remboursés · dép. brutes ${fmt(s.totalDepense)}</div>`:''}`;
   el.appendChild(grindCard);
 
   // Revenus
   if (m.revenus.length) {
     const c=document.createElement('div'); c.className='card';
     c.innerHTML=`<div class="card-title">REVENUS · ${fmt(s.totalRevenu)}</div>`;
-    m.revenus.forEach((r,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div><div class="row-name">${r.type}</div>${r.note?`<div style="font-size:10px;color:var(--text3)">${r.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div style="font-size:15px;font-weight:900;font-family:var(--font-d);color:var(--green)">+${fmt(r.montant)}</div><button onclick="delEntry('revenus',${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`; c.appendChild(row); });
+    m.revenus.forEach((r,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div><div class="row-name">${r.type}</div>${r.note?`<div style="font-size:10px;color:var(--text3)">${r.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div class="row-val" style="color:var(--green);cursor:pointer;border-bottom:1px dashed var(--green)" onclick="editEntry('revenus',${i})">+${fmt(r.montant)}</div><button onclick="delEntry('revenus',${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`; c.appendChild(row); });
     el.appendChild(c);
   }
 
@@ -456,7 +460,7 @@ function renderBudget(el) {
   if (m.invests.length) {
     const c=document.createElement('div'); c.className='card';
     c.innerHTML=`<div class="card-title">INVEST DE MA POCHE · ${fmt(s.investPoche)}</div>`;
-    m.invests.forEach((r,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div><div class="row-name">${r.type}</div>${r.note?`<div style="font-size:10px;color:var(--text3)">${r.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div style="font-size:15px;font-weight:900;font-family:var(--font-d);color:var(--blue)">+${fmt(r.montant)}</div><button onclick="delEntry('invests',${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`; c.appendChild(row); });
+    m.invests.forEach((r,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div><div class="row-name">${r.type}</div>${r.note?`<div style="font-size:10px;color:var(--text3)">${r.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div class="row-val" style="color:var(--blue);cursor:pointer;border-bottom:1px dashed var(--blue)" onclick="editEntry('invests',${i})">+${fmt(r.montant)}</div><button onclick="delEntry('invests',${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`; c.appendChild(row); });
     el.appendChild(c);
   }
 
@@ -464,7 +468,7 @@ function renderBudget(el) {
   if (m.ciel.length) {
     const c=document.createElement('div'); c.className='card';
     c.innerHTML=`<div class="card-title">TOMBÉS DU CIEL · ${fmt(s.totalCiel)}</div>`;
-    m.ciel.forEach((r,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div><div class="row-name">${r.type}</div>${r.note?`<div style="font-size:10px;color:var(--text3)">${r.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div style="font-size:15px;font-weight:900;font-family:var(--font-d);color:var(--yellow)">+${fmt(r.montant)}</div><button onclick="delEntry('ciel',${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`; c.appendChild(row); });
+    m.ciel.forEach((r,i)=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div><div class="row-name">${r.type}</div>${r.note?`<div style="font-size:10px;color:var(--text3)">${r.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div class="row-val" style="color:var(--yellow);cursor:pointer;border-bottom:1px dashed var(--yellow)" onclick="editEntry('ciel',${i})">+${fmt(r.montant)}</div><button onclick="delEntry('ciel',${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`; c.appendChild(row); });
     el.appendChild(c);
   }
 
@@ -474,13 +478,24 @@ function renderBudget(el) {
   Object.entries(depByCat).forEach(([cat,items])=>{
     const ci=BUDGET_CATS[cat]||{label:cat,color:'var(--text3)'};
     const tot=items.reduce((s,d)=>s+d.montant,0);
+    const rembDeCat=(m.remboursements||[]).filter(r=>r.cat===cat);
+    const totRemb=rembDeCat.reduce((s,r)=>s+r.montant,0);
+    const totNet=tot-totRemb;
     const c=document.createElement('div'); c.className='card';
-    c.innerHTML=`<div class="card-title" style="color:${ci.color}">${ci.label} · ${fmt(tot)}</div>`;
+    const titleExtra=totRemb>0?` <span style="color:var(--green);font-size:9px">(net ${fmt(totNet)})</span>`:'';
+    c.innerHTML=`<div class="card-title" style="color:${ci.color}">${ci.label} · ${fmt(tot)}${titleExtra}</div>`;
     items.forEach(d=>{
       const idx=m.depenses.indexOf(d);
       const row=document.createElement('div'); row.className='row';
-      row.innerHTML=`<div><div class="row-name">${d.sous_cat||'—'}</div>${d.note?`<div style="font-size:10px;color:var(--text3)">${d.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div style="font-size:15px;font-weight:900;font-family:var(--font-d);color:var(--red)">-${fmt(d.montant)}</div><button onclick="delEntry('depenses',${idx})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`;
+      row.innerHTML=`<div><div class="row-name">${d.sous_cat||'—'}</div>${d.note?`<div style="font-size:10px;color:var(--text3)">${d.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div class="row-val" style="color:var(--red);cursor:pointer;border-bottom:1px dashed var(--red)" onclick="editEntry('depenses',${idx})">-${fmt(d.montant)}</div><button onclick="delEntry('depenses',${idx})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`;
       c.appendChild(row);
+    });
+    // Afficher les remboursements liés à cette catégorie
+    rembDeCat.forEach(r=>{
+      const ridx=(m.remboursements||[]).indexOf(r);
+      const rrow=document.createElement('div'); rrow.className='row';
+      rrow.innerHTML=`<div><div class="row-name" style="color:var(--green)">↩ ${ci.rembLabel||'Remboursement'}</div>${r.note?`<div style="font-size:10px;color:var(--text3)">${r.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div class="row-val" style="color:var(--green);cursor:pointer;border-bottom:1px dashed var(--green)" onclick="editEntry('remboursements',${ridx})">+${fmt(r.montant)}</div><button onclick="delEntry('remboursements',${ridx})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`;
+      c.appendChild(rrow);
     });
     el.appendChild(c);
   });
@@ -506,6 +521,71 @@ function delEntry(type, idx) {
   getBudgetMonth(budgetMonth)[type].splice(idx,1);
   save(); render();
 }
+function editEntry(type, idx) {
+  const m = getBudgetMonth(budgetMonth);
+  const entry = m[type][idx];
+  const sheet = document.getElementById('modalSheet');
+  const label = type==='depenses' ? (entry.sous_cat||entry.cat) : type==='remboursements' ? '↩ Remboursement' : (entry.type||type);
+  sheet.innerHTML=`
+    <div class="modal-title">Modifier le montant</div>
+    <div class="modal-sub">${label}${entry.note?' · '+entry.note:''}</div>
+    <div class="modal-field-wrap">
+      <div class="modal-field-label">Nouveau montant (€)<span>actuel : ${fmt(entry.montant)}</span></div>
+      <input class="modal-field" type="number" inputmode="decimal" id="edit_montant" value="${entry.montant}" placeholder="${entry.montant}">
+    </div>
+    <div class="btns">
+      <button class="btn btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-ok" onclick="confirmEdit('${type}',${idx})">Valider ✓</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('edit_montant')?.select(),120);
+}
+function confirmEdit(type, idx) {
+  const val = parseFloat(document.getElementById('edit_montant')?.value||0);
+  if (isNaN(val)||val<0) { closeModal(); return; }
+  getBudgetMonth(budgetMonth)[type][idx].montant = val;
+  save(); closeModal(); render();
+}
+function openRembModal(cat) {
+  const ci = BUDGET_CATS[cat];
+  const m = getBudgetMonth(budgetMonth);
+  const currentRemb = m.depenses.filter(d=>d.cat===cat).reduce((s,d)=>s+(d.remb||0),0);
+  const sheet = document.getElementById('modalSheet');
+  sheet.innerHTML=`
+    <div class="modal-title">↩ ${ci.rembLabel||'Remboursement'}</div>
+    <div class="modal-sub">${ci.label} · réduit la dépense nette sans compter en revenu</div>
+    <div class="modal-field-wrap">
+      <div class="modal-field-label">Montant remboursé (€)<span>actuel : ${fmt(currentRemb)}</span></div>
+      <input class="modal-field" type="number" inputmode="decimal" id="remb_montant" placeholder="${currentRemb||0}" value="${currentRemb||''}">
+    </div>
+    <div class="modal-field-wrap">
+      <div class="modal-field-label">Note (optionnel)</div>
+      <input class="modal-field" type="text" id="remb_note" placeholder="ex: virement Loïc du 15/03">
+    </div>
+    <div class="btns">
+      <button class="btn btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-ok" onclick="confirmRemb('${cat}')">Enregistrer ✓</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function confirmRemb(cat) {
+  const montant = parseFloat(document.getElementById('remb_montant')?.value||0);
+  if (isNaN(montant)||montant<0) { closeModal(); return; }
+  const note = document.getElementById('remb_note')?.value||'';
+  const m = getBudgetMonth(budgetMonth);
+  // Stocker le remb sur la première dépense de cette catégorie, ou créer une ligne fantôme
+  const items = m.depenses.filter(d=>d.cat===cat);
+  if (items.length > 0) {
+    // Reset tous les remb de cette cat puis mettre sur le premier
+    items.forEach(d=>{ d.remb=0; d.rembNote=''; });
+    items[0].remb = montant;
+    items[0].rembNote = note;
+  } else {
+    // Pas encore de dépense dans cette cat → créer une entrée remb pure
+    m.depenses.push({ montant:0, cat, sous_cat:'—', note:'', remb:montant, rembNote:note });
+  }
+  save(); closeModal(); render();
+}
 
 // ─── STATS VIEW ───────────────────────────────────────────────────────────────
 function renderStats(el) {
@@ -527,12 +607,12 @@ function renderStats(el) {
   recapCard.appendChild(thead);
   let tg=0,tr=0,td=0,ts=0;
   keys.forEach(key=>{
-    const s=budgetStats(key); tg+=s.grind; tr+=s.totalRevenu; td+=s.totalDepense; ts+=s.savings;
+    const s=budgetStats(key); tg+=s.grind; tr+=s.totalRevenu; td+=s.totalDepNette; ts+=s.savings;
     const row=document.createElement('div');
     row.style.cssText='display:grid;grid-template-columns:55px 1fr 1fr 1fr 1fr;gap:4px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer';
     row.onclick=()=>{ budgetMonth=key; setView('budget'); };
     const gc=s.grind>=0?'var(--cyan)':'var(--red)', sc=s.savings>=0?'var(--green)':'var(--red)';
-    row.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2)">${getMonthLabel(key)}</div><div style="font-size:11px;font-family:var(--font-mono);color:var(--green);text-align:right">${Math.round(s.totalRevenu).toLocaleString('fr-FR')}</div><div style="font-size:11px;font-family:var(--font-mono);color:var(--red);text-align:right">-${Math.round(s.totalDepense).toLocaleString('fr-FR')}</div><div style="font-size:11px;font-family:var(--font-mono);color:${sc};text-align:right">${s.savings>=0?'+':''}${Math.round(s.savings).toLocaleString('fr-FR')}</div><div style="font-size:13px;font-weight:900;font-family:var(--font-d);color:${gc};text-align:right">${s.grind>=0?'+':''}${Math.round(s.grind).toLocaleString('fr-FR')}</div>`;
+    row.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2)">${getMonthLabel(key)}</div><div style="font-size:11px;font-family:var(--font-mono);color:var(--green);text-align:right">${Math.round(s.totalRevenu).toLocaleString('fr-FR')}</div><div style="font-size:11px;font-family:var(--font-mono);color:var(--red);text-align:right">-${Math.round(s.totalDepNette).toLocaleString('fr-FR')}</div><div style="font-size:11px;font-family:var(--font-mono);color:${sc};text-align:right">${s.savings>=0?'+':''}${Math.round(s.savings).toLocaleString('fr-FR')}</div><div style="font-size:13px;font-weight:900;font-family:var(--font-d);color:${gc};text-align:right">${s.grind>=0?'+':''}${Math.round(s.grind).toLocaleString('fr-FR')}</div>`;
     recapCard.appendChild(row);
   });
   const totRow=document.createElement('div');
@@ -573,8 +653,8 @@ function switchTab(t) {
   document.getElementById('modalSheet').innerHTML=buildBudgetHTML();
 }
 function buildBudgetHTML() {
-  const tabs=[{k:'depense',l:'💸 Dépense'},{k:'revenu',l:'💰 Revenu'},{k:'invest',l:'📈 Invest'},{k:'ciel',l:'🎁 Du ciel'}];
-  const tabsHTML=tabs.map(t=>`<button onclick="switchTab('${t.k}')" style="flex:1;min-width:60px;padding:7px 2px;border-radius:10px;border:1px solid ${budgetModalType===t.k?'var(--cyan)':'var(--border)'};background:${budgetModalType===t.k?'rgba(94,231,223,0.12)':'var(--bg3)'};color:${budgetModalType===t.k?'var(--cyan)':'var(--text3)'};font-size:10px;font-weight:700;cursor:pointer">${t.l}</button>`).join('');
+  const tabs=[{k:'depense',l:'💸 Dépense'},{k:'revenu',l:'💰 Revenu'},{k:'invest',l:'📈 Invest'},{k:'ciel',l:'🎁 Du ciel'},{k:'remb',l:'↩ Remb.'}];
+  const tabsHTML=tabs.map(t=>`<button onclick="switchTab('${t.k}')" style="flex:1;min-width:55px;padding:7px 2px;border-radius:10px;border:1px solid ${budgetModalType===t.k?'var(--cyan)':'var(--border)'};background:${budgetModalType===t.k?'rgba(94,231,223,0.12)':'var(--bg3)'};color:${budgetModalType===t.k?'var(--cyan)':'var(--text3)'};font-size:10px;font-weight:700;cursor:pointer">${t.l}</button>`).join('');
   let fields='';
   if (budgetModalType==='depense') {
     const firstCat=Object.keys(BUDGET_CATS)[0];
@@ -593,6 +673,12 @@ function buildBudgetHTML() {
       <div class="modal-field-wrap"><div class="modal-field-label">Montant (€)</div><input class="modal-field" type="number" inputmode="decimal" id="bm_montant" placeholder="0"></div>
       <div class="modal-field-wrap"><div class="modal-field-label">Type</div><select class="modal-field" id="bm_type">${INVEST_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
       <div class="modal-field-wrap"><div class="modal-field-label">Note (optionnel)</div><input class="modal-field" type="text" id="bm_note" placeholder=""></div>`;
+  } else if (budgetModalType==='remb') {
+    const catsAvecRemb = Object.entries(BUDGET_CATS).filter(([k,v])=>v.remb);
+    fields=`
+      <div class="modal-field-wrap"><div class="modal-field-label">Montant remboursé (€)</div><input class="modal-field" type="number" inputmode="decimal" id="bm_montant" placeholder="0"></div>
+      <div class="modal-field-wrap"><div class="modal-field-label">Catégorie concernée</div><select class="modal-field" id="bm_remb_cat">${catsAvecRemb.map(([k,v])=>`<option value="${k}">${v.label} · ${v.rembLabel}</option>`).join('')}</select></div>
+      <div class="modal-field-wrap"><div class="modal-field-label">Note (optionnel)</div><input class="modal-field" type="text" id="bm_note" placeholder="ex: virement Loïc, tricount Lisa..."></div>`;
   } else {
     fields=`
       <div class="modal-field-wrap"><div class="modal-field-label">Montant (€)</div><input class="modal-field" type="number" inputmode="decimal" id="bm_montant" placeholder="0"></div>
@@ -622,6 +708,10 @@ function confirmBudget() {
     m.revenus.push({montant,type:document.getElementById('bm_type').value,note});
   } else if (budgetModalType==='invest') {
     m.invests.push({montant,type:document.getElementById('bm_type').value,note});
+  } else if (budgetModalType==='remb') {
+    const cat=document.getElementById('bm_remb_cat').value;
+    if (!m.remboursements) m.remboursements=[];
+    m.remboursements.push({montant,cat,note});
   } else {
     m.ciel.push({montant,type:document.getElementById('bm_type').value,note});
   }
