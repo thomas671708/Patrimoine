@@ -172,9 +172,8 @@ const INVEST_TYPES   = ['PEA BoursoBank','BTC récurrent','BTC perso','PEE/PERCO
 const CIEL_TYPES     = ['Saveback BTC','Roundup Berkshire','Staking','Parrainage','Intéressement','Autre'];
 
 // ─── DEPENSES RECURRENTES ─────────────────────────────────────────────────────
-// SNCF : Trade Republic arrondit à 88€ prélevés, mais la base de remboursement employeur est 87,60€
-const SNCF_DEPENSE   = 88;      // ce que Trade Republic prélève réellement
-const SNCF_BASE_REMB = 87.60;   // base tarifaire sur laquelle l'employeur calcule les 90%
+const SNCF_DEPENSE   = 88;
+const SNCF_BASE_REMB = 87.60;
 const SNCF_REMB_RATE = 0.90;
 const SNCF_REMB_MONTANT = Math.round(SNCF_BASE_REMB * SNCF_REMB_RATE * 100) / 100; // 78.84€
 const SNCF_NET = Math.round((SNCF_DEPENSE - SNCF_REMB_MONTANT) * 100) / 100;        // 9.16€
@@ -246,19 +245,16 @@ const DEFAULTS = {
         { montant: 51.71,   type: 'Intérêts CC', note: 'Intérêts CIC' },
       ],
       depenses: [
-        // Voiture
         { montant: 270,   cat: 'voiture',     sous_cat: 'Prêt auto',            note: '' },
         { montant: 54.59, cat: 'voiture',     sous_cat: 'Assurance',            note: '' },
         { montant: 100,   cat: 'voiture',     sous_cat: 'Autre',                note: 'Batterie' },
         { montant: 59,    cat: 'voiture',     sous_cat: 'Essence',              note: '' },
-        // Logement
         { montant: 457,   cat: 'logement',    sous_cat: 'Loyer Oberhausbergen', note: '' },
         { montant: 41,    cat: 'logement',    sous_cat: 'Électricité',          note: '' },
         { montant: 103,   cat: 'logement',    sous_cat: 'Gaz',                  note: '' },
         { montant: 19,    cat: 'logement',    sous_cat: 'Assurance',            note: '' },
         { montant: 25,    cat: 'logement',    sous_cat: 'Internet',             note: '' },
         { montant: 400,   cat: 'logement',    sous_cat: 'Appart Lisa',          note: '' },
-        // Abonnements
         { montant: 3,     cat: 'abonnements', sous_cat: 'Apple',                note: '' },
         { montant: 30,    cat: 'abonnements', sous_cat: 'Fitness Park',         note: '' },
         { montant: 40,    cat: 'abonnements', sous_cat: 'Téléphone',            note: '' },
@@ -266,17 +262,14 @@ const DEFAULTS = {
         { montant: 3.7,   cat: 'abonnements', sous_cat: 'Frais CIC',            note: '' },
         { montant: 32,    cat: 'abonnements', sous_cat: 'Autre',                note: 'Coiffeur' },
         { montant: 16,    cat: 'abonnements', sous_cat: 'Autre',                note: 'Fitness park Lili' },
-        // Au travail
         { montant: 5,     cat: 'au_travail',  sous_cat: 'Cantine',              note: 'Boulangerie' },
         { montant: 15,    cat: 'au_travail',  sous_cat: 'Cantine',              note: '' },
         { montant: 2,     cat: 'au_travail',  sous_cat: 'Cantine',              note: 'Bretzel' },
         { montant: 5,     cat: 'au_travail',  sous_cat: 'Cantine',              note: 'Kebab' },
         { montant: 20,    cat: 'au_travail',  sous_cat: 'Cantine',              note: '' },
-        // Bar/kif
         { montant: 48.20, cat: 'bar_kif',     sous_cat: 'Bar',                  note: 'Sortie bar jeux' },
         { montant: 20,    cat: 'bar_kif',     sous_cat: 'Bar',                  note: 'Lisa Lescout' },
         { montant: 32,    cat: 'bar_kif',     sous_cat: 'Bar',                  note: 'Caupona' },
-        // Alimentation
         { montant: 187,   cat: 'alimentation', sous_cat: 'Courses',             note: 'Courses Lili Toto' },
         { montant: 12,    cat: 'alimentation', sous_cat: 'Courses',             note: '' },
         { montant: 18,    cat: 'alimentation', sous_cat: 'Courses',             note: '' },
@@ -286,10 +279,8 @@ const DEFAULTS = {
         { montant: 8,     cat: 'alimentation', sous_cat: 'Courses',             note: 'Dentifrice' },
         { montant: 9,     cat: 'alimentation', sous_cat: 'Courses',             note: 'Leclerc' },
         { montant: 2,     cat: 'alimentation', sous_cat: 'Courses',             note: 'Gel hydro' },
-        // Resto
         { montant: 32,    cat: 'resto',        sous_cat: 'Resto',               note: 'Troquet' },
         { montant: 13,    cat: 'resto',        sous_cat: 'Resto',               note: 'Pizza' },
-        // Voyages
         { montant: 278,   cat: 'voyages',      sous_cat: 'Hôtel',               note: 'Hotel Constance' },
         { montant: 4,     cat: 'voyages',      sous_cat: 'Transport',           note: 'Action 4' },
         { montant: 29,    cat: 'voyages',      sous_cat: 'Repas',               note: 'Temple bar' },
@@ -310,9 +301,7 @@ const DEFAULTS = {
         { montant: 3,     cat: 'voyages',      sous_cat: 'Repas',               note: 'Eau' },
         { montant: 27,    cat: 'voyages',      sous_cat: 'Repas',               note: 'Dépenses St Louis' },
         { montant: 60.50, cat: 'voyages',      sous_cat: 'Transport',           note: 'Ticket Stuttgart' },
-        // Rare (brut positif, les remb sont en remboursements)
         { montant: 10,    cat: 'rare',         sous_cat: 'Achat ponctuel',      note: 'Habitude appli' },
-        // Cadeaux
         { montant: 23,    cat: 'cadeaux',      sous_cat: 'Cadeau',              note: 'Padel Lisa' },
         { montant: 19,    cat: 'cadeaux',      sous_cat: 'Cadeau',              note: 'Cadeau Basile' },
       ],
@@ -342,19 +331,16 @@ const DEFAULTS = {
         { montant: 0.39,    type: 'Intérêts CC', note: 'Intérêts CC Trade Republic' },
       ],
       depenses: [
-        // Voiture
         { montant: 270,   cat: 'voiture',     sous_cat: 'Prêt auto',            note: '' },
         { montant: 54.59, cat: 'voiture',     sous_cat: 'Assurance',            note: '' },
         { montant: 52,    cat: 'voiture',     sous_cat: 'Essence',              note: '' },
         { montant: 60.21, cat: 'voiture',     sous_cat: 'Essence',              note: '' },
-        // Logement
         { montant: 469,   cat: 'logement',    sous_cat: 'Loyer Oberhausbergen', note: '' },
         { montant: 41,    cat: 'logement',    sous_cat: 'Électricité',          note: '' },
         { montant: 103,   cat: 'logement',    sous_cat: 'Gaz',                  note: '' },
         { montant: 19,    cat: 'logement',    sous_cat: 'Assurance',            note: '' },
         { montant: 25,    cat: 'logement',    sous_cat: 'Internet',             note: '' },
         { montant: 400,   cat: 'logement',    sous_cat: 'Appart Lisa',          note: '' },
-        // Abonnements
         { montant: 3,     cat: 'abonnements', sous_cat: 'Apple',                note: '' },
         { montant: 59,    cat: 'abonnements', sous_cat: 'Fitness Park',         note: '' },
         { montant: 40,    cat: 'abonnements', sous_cat: 'Téléphone',            note: '' },
@@ -363,15 +349,12 @@ const DEFAULTS = {
         { montant: 3.7,   cat: 'abonnements', sous_cat: 'Frais CIC',            note: '' },
         { montant: 24,    cat: 'abonnements', sous_cat: 'ChatGPT',              note: '' },
         { montant: 22,    cat: 'abonnements', sous_cat: 'Claude',               note: '' },
-        // Au travail
         { montant: 20,    cat: 'au_travail',  sous_cat: 'Cantine',              note: '' },
         { montant: 20,    cat: 'au_travail',  sous_cat: 'Cantine',              note: '' },
-        // Bar/kif
         { montant: 7,     cat: 'bar_kif',     sous_cat: 'Bar',                  note: 'Bareberousse' },
         { montant: 34,    cat: 'bar_kif',     sous_cat: 'Bar',                  note: 'Bar Gaëtan' },
         { montant: 46,    cat: 'bar_kif',     sous_cat: 'Bar',                  note: 'Bar Julien Edern' },
         { montant: 7,     cat: 'bar_kif',     sous_cat: 'Bar',                  note: 'Atlantico' },
-        // Alimentation
         { montant: 26,    cat: 'alimentation', sous_cat: 'Courses',             note: 'Shampoings' },
         { montant: 42,    cat: 'alimentation', sous_cat: 'Courses',             note: '' },
         { montant: 7,     cat: 'alimentation', sous_cat: 'Boulangerie',         note: '' },
@@ -379,7 +362,6 @@ const DEFAULTS = {
         { montant: 10,    cat: 'alimentation', sous_cat: 'Boulangerie',         note: '' },
         { montant: 3,     cat: 'alimentation', sous_cat: 'Boulangerie',         note: '' },
         { montant: 69,    cat: 'alimentation', sous_cat: 'Courses',             note: '' },
-        // Voyages
         { montant: 239,   cat: 'voyages',      sous_cat: 'Hôtel',               note: 'Hôtel Lindau' },
         { montant: 16,    cat: 'voyages',      sous_cat: 'Repas',               note: 'Café' },
         { montant: 80,    cat: 'voyages',      sous_cat: 'Hôtel',               note: 'Hôtel' },
@@ -392,12 +374,10 @@ const DEFAULTS = {
         { montant: 35,    cat: 'voyages',      sous_cat: 'Repas',               note: 'Brunch' },
         { montant: 97,    cat: 'voyages',      sous_cat: 'Avion',               note: 'Avion Londres' },
         { montant: 37,    cat: 'voyages',      sous_cat: 'Hôtel',               note: 'Hôtel Groelingfest' },
-        // Rare
         { montant: 2,     cat: 'rare',         sous_cat: 'Autre',               note: 'Parcus' },
         { montant: 77,    cat: 'rare',         sous_cat: 'Décathlon',           note: '' },
         { montant: 35,    cat: 'rare',         sous_cat: 'Achat ponctuel',      note: 'Algo app' },
         { montant: 52,    cat: 'rare',         sous_cat: 'Amende',              note: 'Amende parking' },
-        // Cadeaux
         { montant: 31,    cat: 'cadeaux',      sous_cat: 'Cadeau',              note: 'Cadeau maman' },
       ],
       invests: [
@@ -466,18 +446,12 @@ function save() {
   saveToCloud(state).catch(()=>{});
 }
 async function initState() {
-  // Les mois codés en dur dans DEFAULTS sont toujours prioritaires
   const FIXED_MONTHS = Object.keys(DEFAULTS.budget || {});
-
-  // 1. Charger depuis localStorage
   state = loadState();
   if (!state.budget) state.budget = {};
-
-  // 2. Toujours écraser les mois fixes avec les DEFAULTS (source de vérité)
   FIXED_MONTHS.forEach(month => {
     state.budget[month] = JSON.parse(JSON.stringify(DEFAULTS.budget[month]));
   });
-
   render();
   showSyncStatus('⏳ Sync cloud…');
   try {
@@ -485,7 +459,6 @@ async function initState() {
     if (cloud) {
       if (cloud.history && cloud.history.length >= (state.history||[]).length) {
         const cloudBudget = cloud.budget || {};
-        // Fusionner : cloud pour les autres mois, DEFAULTS pour les mois fixes
         const mergedBudget = { ...cloudBudget };
         FIXED_MONTHS.forEach(month => {
           mergedBudget[month] = JSON.parse(JSON.stringify(DEFAULTS.budget[month]));
@@ -501,7 +474,6 @@ async function initState() {
   } catch {
     showSyncStatus('⚠️ Offline', 2000);
   }
-  // Sauvegarder avec les mois fixes injectés
   save();
 }
 function showSyncStatus(msg, hideAfter=0) {
@@ -665,8 +637,6 @@ function renderDashboard(el) {
 function renderBudget(el) {
   const m = getBudgetMonth(budgetMonth);
   const s = budgetStats(budgetMonth);
-
-  // Check si mois vide → proposer pré-remplissage
   const isEmpty = !m.depenses.length && !m.revenus.length && !m.invests.length && !m.ciel.length;
 
   const hd=document.createElement('div');
@@ -683,7 +653,6 @@ function renderBudget(el) {
     </div>`;
   el.appendChild(hd);
 
-  // Bandeau pré-remplissage si mois vide
   if (isEmpty) {
     const prefillBanner = document.createElement('div');
     prefillBanner.className = 'card';
@@ -699,7 +668,6 @@ function renderBudget(el) {
     el.appendChild(prefillBanner);
   }
 
-  // Carte GRIND
   const gc=s.grind>=0?'var(--cyan)':'var(--red)', sc=s.savings>=0?'var(--green)':'var(--red)';
   const grindCard=document.createElement('div'); grindCard.className='card';
   grindCard.innerHTML=`<div class="card-title">GRIND DU MOIS</div>
@@ -716,7 +684,6 @@ function renderBudget(el) {
     ${s.totalRemb>0?`<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:10px">↩ ${fmt(s.totalRemb)} remboursés · dép. brutes ${fmt(s.totalDepense)}</div>`:''}`;
   el.appendChild(grindCard);
 
-  // Revenus
   if (m.revenus.length) {
     const c=document.createElement('div'); c.className='card';
     c.innerHTML=`<div class="card-title">REVENUS · ${fmt(s.totalRevenu)}</div>`;
@@ -724,7 +691,6 @@ function renderBudget(el) {
     el.appendChild(c);
   }
 
-  // Invest de poche
   if (m.invests.length) {
     const c=document.createElement('div'); c.className='card';
     c.innerHTML=`<div class="card-title">INVEST DE MA POCHE · ${fmt(s.investPoche)}</div>`;
@@ -732,7 +698,6 @@ function renderBudget(el) {
     el.appendChild(c);
   }
 
-  // Tombés du ciel
   if (m.ciel.length) {
     const c=document.createElement('div'); c.className='card';
     c.innerHTML=`<div class="card-title">TOMBÉS DU CIEL · ${fmt(s.totalCiel)}</div>`;
@@ -740,7 +705,6 @@ function renderBudget(el) {
     el.appendChild(c);
   }
 
-  // Dépenses par catégorie
   const depByCat={};
   m.depenses.forEach(d=>{ if(!depByCat[d.cat]) depByCat[d.cat]=[]; depByCat[d.cat].push(d); });
   Object.entries(depByCat).forEach(([cat,items])=>{
@@ -759,7 +723,6 @@ function renderBudget(el) {
       row.innerHTML=`<div><div class="row-name">${d.sous_cat||'—'}</div>${sncfBadge}${d.note&&!d.isSNCF?`<div style="font-size:10px;color:var(--text3)">${d.note}</div>`:''}</div><div style="display:flex;align-items:center;gap:10px"><div class="row-val" style="color:var(--red);cursor:pointer;border-bottom:1px dashed var(--red)" onclick="editEntry('depenses',${idx})">-${fmt(d.montant)}</div><button onclick="delEntry('depenses',${idx})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">✕</button></div>`;
       c.appendChild(row);
     });
-    // Remboursements liés à cette catégorie
     rembDeCat.forEach(r=>{
       const ridx=(m.remboursements||[]).indexOf(r);
       const rrow=document.createElement('div'); rrow.className='row';
@@ -818,25 +781,56 @@ function confirmEdit(type, idx) {
 
 // ─── PREFILL MODAL ────────────────────────────────────────────────────────────
 function openPrefillModal() {
+  // Calculer la clé du mois précédent
+  const [y, m] = budgetMonth.split('-').map(Number);
+  const prevDate = new Date(y, m - 2, 1);
+  const prevKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  const prevMonth = state.budget?.[prevKey];
+
   const sheet = document.getElementById('modalSheet');
   const rows = RECURRING_EXPENSES.map((exp, i) => {
     const ci = BUDGET_CATS[exp.cat];
-    const sncfInfo = exp.isSNCF ? `<div class="sncf-badge" style="margin-top:2px">90% remb. · net ${fmt(SNCF_NET)} après salaire</div>` : '';
+
+    // Chercher le montant du mois précédent pour ce cat + sous_cat
+    let montantSuggere = exp.montant;
+    let fromPrev = false;
+    if (prevMonth?.depenses) {
+      const match = prevMonth.depenses.find(
+        d => d.cat === exp.cat && d.sous_cat === exp.sous_cat
+      );
+      if (match) {
+        montantSuggere = match.montant;
+        fromPrev = true;
+      }
+    }
+
+    const sncfInfo = exp.isSNCF
+      ? `<div class="sncf-badge" style="margin-top:2px">90% remb. · net ${fmt(SNCF_NET)} après salaire</div>`
+      : '';
+    const prevBadge = fromPrev
+      ? `<div style="font-size:9px;color:var(--cyan);font-family:var(--font-mono);margin-top:2px">↩ ${getMonthLabel(prevKey)}</div>`
+      : `<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">défaut</div>`;
+
     return `
       <div class="prefill-row">
         <input type="checkbox" class="prefill-check" id="pf_check_${i}" checked>
         <div class="prefill-label">
           <div>${exp.sous_cat}</div>
-          <div class="prefill-cat">${ci?.label||exp.cat}</div>
+          <div class="prefill-cat">${ci?.label || exp.cat}</div>
           ${sncfInfo}
+          ${prevBadge}
         </div>
-        <input type="number" inputmode="decimal" class="prefill-amount" id="pf_amt_${i}" value="${exp.montant}">
+        <input type="number" inputmode="decimal" class="prefill-amount" id="pf_amt_${i}" value="${montantSuggere}">
       </div>`;
   }).join('');
 
+  const subTitle = prevMonth
+    ? `Montants repris du mois précédent (${getMonthLabel(prevKey)}) · modifie si besoin`
+    : `Aucun mois précédent · montants par défaut`;
+
   sheet.innerHTML = `
     <div class="modal-title">🗓️ Dépenses récurrentes</div>
-    <div class="modal-sub">Décoche ce qui n'a pas eu lieu · modifie les montants si besoin</div>
+    <div class="modal-sub">${subTitle}</div>
     ${rows}
     <div class="btns" style="margin-top:18px">
       <button class="btn btn-cancel" onclick="closeModal()">Annuler</button>
@@ -872,9 +866,6 @@ function confirmPrefill() {
       isSNCF: exp.isSNCF || false,
       sncfCorrected: false,
     });
-
-    // SNCF : NE PAS corriger ici, la correction se fera quand le salaire est saisi
-    // On laisse la dépense à 88€ et elle sera réduite à 9,16€ lors de la saisie du salaire
   });
 
   // Participation Loïc logement : remb automatique
@@ -1015,21 +1006,15 @@ function confirmBudget() {
     const sous_cat=document.getElementById('bm_souscat')?.value||'';
     const isSNCF = sous_cat === 'SNCF';
     m.depenses.push({montant,cat,sous_cat,note,isSNCF,sncfCorrected:false});
-    // La correction SNCF se fera à la saisie du salaire, pas ici
   } else if (budgetModalType==='revenu') {
     const type = document.getElementById('bm_type').value;
     if (type === 'Salaire') {
-      // Correction SNCF : le salaire reçu inclut déjà le remb employeur (78,84€)
-      // → on corrige le salaire saisi en soustrayant ce montant
-      // → on corrige aussi la dépense SNCF du mois si elle existe
       const sncfDep = m.depenses.find(d => d.isSNCF);
       const alreadyCorrected = m.revenus.some(r => r.sncfCorrected);
-
       if (sncfDep && !alreadyCorrected) {
         const salaireBrut = montant;
         const salaireCorrige = Math.round((montant - SNCF_REMB_MONTANT) * 100) / 100;
-        // Corriger la dépense SNCF : on réduit son montant à ce qui est vraiment à ta charge
-        sncfDep.montant = SNCF_NET; // 9,16€
+        sncfDep.montant = SNCF_NET;
         sncfDep.note = `Net après remb. employeur 90% (base 87,60€ · remb. ${fmt(SNCF_REMB_MONTANT)})`;
         sncfDep.sncfCorrected = true;
         m.revenus.push({
@@ -1039,7 +1024,6 @@ function confirmBudget() {
           sncfCorrected: true,
         });
         save(); closeModal();
-        // Afficher confirmation
         showSncfCorrectionToast(salaireBrut, salaireCorrige);
         render();
         return;
@@ -1124,8 +1108,6 @@ function renderHistorique(el) {
 // ─── MODALE PATRIMOINE PAR PLATEFORME ─────────────────────────────────────────
 function openModal() {
   const sheet = document.getElementById('modalSheet');
-
-  // Groupes par plateforme
   const platforms = [
     {
       name: '📈 BoursoBank', color: '#5ee7df',
@@ -1175,7 +1157,7 @@ function openModal() {
 
   const groupsHTML = platforms.map(p => `
     <div class="platform-group">
-      <div class="platform-label" style="color:${p.color};--dot-color:${p.color}">${p.name}</div>
+      <div class="platform-label" style="color:${p.color}">${p.name}</div>
       ${p.fields.map(f => `
         <div class="platform-field-row">
           <div class="platform-field-name">${f.label}</div>
@@ -1201,24 +1183,18 @@ function confirmModalGrouped() {
     const v = parseFloat(el.value.replace(',', '.'));
     return isNaN(v) ? fallback : v;
   };
-
-  // PEA
   Object.keys(state.pea).forEach(k => {
     state.pea[k].value = read('mg_pea_' + k, state.pea[k].value);
   });
-  // Actions
   Object.keys(state.actions).forEach(k => {
     state.actions[k].value = read('mg_act_' + k, state.actions[k].value);
   });
-  // Banques
   Object.keys(state.banques).forEach(k => {
     state.banques[k].value = read('mg_banq_' + k, state.banques[k].value);
   });
-  // Crypto
   Object.keys(state.crypto).forEach(k => {
     state.crypto[k].value = read('mg_crypto_' + k, state.crypto[k].value);
   });
-
   closeModal(); finalize();
 }
 
