@@ -201,6 +201,9 @@ const RECURRING_EXPENSES = [
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const DEFAULTS = {
   lastUpdate: 'Jan 2026',
+  objectifsGrind: {
+    '2026': 12000,
+  },
   banques: {
     bforbank:  { label:'BforBank',        value:0 },
     boursoCC:  { label:'CC BoursoBank',   value:4.23 },
@@ -531,6 +534,43 @@ function budgetStats(key) {
   return { totalRevenu, totalDepense, totalRemb, correctionSNCF, totalDepNette, investPoche, totalCiel, totalInvest, savings, grind };
 }
 
+// ─── OBJECTIF GRIND ──────────────────────────────────────────────────────────
+function getObjectifGrind(annee) {
+  if (!state.objectifsGrind) state.objectifsGrind = {};
+  return state.objectifsGrind[annee] || 10000;
+}
+function setObjectifGrind(annee, val) {
+  if (!state.objectifsGrind) state.objectifsGrind = {};
+  state.objectifsGrind[annee] = val;
+  save(); render();
+}
+function openObjectifModal(annee) {
+  const current = getObjectifGrind(annee);
+  const sheet = document.getElementById('modalSheet');
+  sheet.innerHTML = `
+    <div class="modal-title">🎯 Objectif GRIND ${annee}</div>
+    <div class="modal-sub">Montant total à accumuler sur l'année</div>
+    <div class="modal-field-wrap">
+      <div class="modal-field-label">Objectif annuel (€)<span>actuel : ${fmt(current)}</span></div>
+      <input class="modal-field" type="number" inputmode="decimal" id="obj_val" value="${current}" placeholder="${current}">
+    </div>
+    <div style="background:rgba(94,231,223,0.06);border:1px solid rgba(94,231,223,0.15);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-bottom:4px">
+      L'objectif mensuel glissant sera recalculé automatiquement chaque mois en fonction de l'avance ou du retard accumulé.
+    </div>
+    <div class="btns">
+      <button class="btn btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-ok" onclick="confirmObjectif('${annee}')">Valider ✓</button>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('obj_val')?.select(), 120);
+}
+function confirmObjectif(annee) {
+  const val = parseFloat((document.getElementById('obj_val')?.value || '0').replace(',', '.'));
+  if (isNaN(val) || val <= 0) { closeModal(); return; }
+  setObjectifGrind(annee, val);
+  closeModal();
+}
+
 // ─── PATRIMOINE CALCULS ───────────────────────────────────────────────────────
 function getPEA()     { return Object.values(state.pea).reduce((s,e)=>s+e.value,0); }
 function getBanques() { return Object.values(state.banques).reduce((s,a)=>s+a.value,0); }
@@ -693,13 +733,48 @@ function renderBudget(el) {
       → <b>net net ${fmt(s.totalDepNette)}</b>
     </div>`:''}
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">OBJECTIF GRIND · 833€/mois <span style="color:var(--text3)">(10k/an)</span></div>
-        <div style="font-size:10px;font-family:var(--font-mono);color:${s.grind>=833?'var(--green)':'var(--orange)'}">${Math.round(Math.min(s.grind/833*100,100))}%</div>
-      </div>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(Math.max(s.grind/833*100,0),100).toFixed(1)}%;background:${s.grind>=833?'linear-gradient(90deg,var(--green),#86efac)':'linear-gradient(90deg,var(--orange),#fcd34d)'}"></div></div>
-      ${s.grind<833&&s.grind>0?`<div style="font-size:10px;color:var(--orange);font-family:var(--font-mono);margin-top:5px">encore ${fmt(833-Math.round(s.grind))} pour atteindre l'objectif</div>`:''}
-      ${s.grind>=833?`<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:5px">✓ objectif atteint · +${fmt(Math.round(s.grind-833))} bonus</div>`:''}
+      ${(()=>{
+        const annee = budgetMonth.slice(0,4);
+        const GRIND_ANNUEL = getObjectifGrind(annee);
+        // Calcul du grind cumulé YTD (tous les mois de l'année en cours SAUF le mois affiché)
+        const moisNum = parseInt(budgetMonth.slice(5,7)); // 1-12
+        let grindYtdAvant = 0;
+        Object.keys(state.budget||{}).forEach(k => {
+          if (k.startsWith(annee) && k !== budgetMonth) {
+            grindYtdAvant += budgetStats(k).grind;
+          }
+        });
+        // Grind cumulé en incluant ce mois
+        const grindYtdAvecCeMois = grindYtdAvant + s.grind;
+        // Objectif glissant pour CE mois :
+        // Ce qu'il reste à accumuler sur l'année / mois restants INCLUANT ce mois
+        const moisDispos = 12 - moisNum + 1; // ce mois + les suivants
+        const objectifGlissant = Math.round((GRIND_ANNUEL - grindYtdAvant) / moisDispos);
+        const avance = s.grind - objectifGlissant;
+        const pctObj = Math.min(Math.max(s.grind / objectifGlissant * 100, 0), 100);
+        const couleurObj = s.grind >= objectifGlissant ? 'var(--green)' : 'var(--orange)';
+        const est833 = objectifGlissant === 833;
+        return \`
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">OBJECTIF GRIND · <span style="color:\${couleurObj};font-weight:700">\${fmt(objectifGlissant)}/mois</span></div>
+                <button onclick="openObjectifModal('\${annee}')" style="background:rgba(94,231,223,0.1);border:1px solid rgba(94,231,223,0.2);border-radius:6px;padding:2px 7px;font-size:9px;color:var(--cyan);cursor:pointer;font-family:var(--font-mono)">✎ \${fmt(GRIND_ANNUEL)}/an</button>
+              </div>
+              <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">
+                \${grindYtdAvant !== 0 ? \`cumul ytd \${fmt(Math.round(grindYtdAvant))} · \${moisDispos} mois restants\` : 'objectif moyen : ' + fmt(Math.round(GRIND_ANNUEL/12)) + '/mois'}
+              </div>
+            </div>
+            <div style="font-size:10px;font-family:var(--font-mono);color:\${couleurObj};text-align:right">
+              \${Math.round(pctObj)}%
+            </div>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:\${pctObj.toFixed(1)}%;background:\${s.grind>=objectifGlissant?'linear-gradient(90deg,var(--green),#86efac)':'linear-gradient(90deg,var(--orange),#fcd34d)'}"></div></div>
+          \${s.grind < objectifGlissant && s.grind > 0 ? \`<div style="font-size:10px;color:var(--orange);font-family:var(--font-mono);margin-top:5px">encore \${fmt(objectifGlissant - Math.round(s.grind))} pour l'objectif du mois</div>\` : ''}
+          \${s.grind >= objectifGlissant ? \`<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:5px">✓ objectif atteint · \${avance>=0?'+':''}\${fmt(Math.round(avance))} d'avance</div>\` : ''}
+          \${grindYtdAvant !== 0 ? \`<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:4px">ytd avec ce mois : \${grindYtdAvecCeMois>=0?'+':''}\${fmt(Math.round(grindYtdAvecCeMois))} / \${fmt(GRIND_ANNUEL)}</div>\` : ''}
+        \`;
+      })()}
     </div>`;
   el.appendChild(grindCard);
 
