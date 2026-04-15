@@ -691,24 +691,51 @@ function editEntry(type,idx) {
   document.getElementById('modalOverlay').classList.add('show');
   setTimeout(()=>document.getElementById('edit_montant')?.select(),120);
 }
-function appliqueCorrectionSNCF(m) {
-  // Fonction centrale : repart de zéro et applique la correction si salaire + SNCF présents
-  const sncfDep   = m.depenses.find(d => d.isSNCF);
-  const salEntry  = m.revenus.find(r => r._brutSaisi); // on stocke le brut dans _brutSaisi
+// Extrait le salaire brut depuis une entrée salaire (avec ou sans _brutSaisi)
+function getSalaireBrut(salEntry) {
+  if (salEntry._brutSaisi) return salEntry._brutSaisi;
+  // Fallback : extraire depuis la note "brut saisi : 2 400€"
+  const match = (salEntry.note||'').match(/brut saisi\s*:\s*([\d\s,\.]+)€/);
+  if (match) return parseFloat(match[1].replace(/\s/g,'').replace(',','.'));
+  // Dernier recours : si sncfCorrected, le brut = montant + SNCF_REMB_MONTANT
+  if (salEntry.sncfCorrected) return Math.round((salEntry.montant + SNCF_REMB_MONTANT)*100)/100;
+  return salEntry.montant;
+}
+
+// Extrait le montant brut SNCF (avec ou sans _brutSaisi)
+function getSNCFBrut(sncfDep) {
+  if (sncfDep._brutSaisi) return sncfDep._brutSaisi;
+  // Si corrigé, le brut = SNCF_DEPENSE (88€ par défaut)
+  if (sncfDep.sncfCorrected) return SNCF_DEPENSE;
+  // Sinon le montant est déjà le brut
+  return sncfDep.montant;
+}
+
+// Fonction centrale : recalcule tout de A à Z
+function recalculerSNCF(m, nouveauSalBrut, nouveauSNCFBrut) {
+  const sncfDep  = m.depenses.find(d => d.isSNCF);
+  const salEntry = m.revenus.find(r => r.sncfCorrected || r.type==='Salaire');
   if (!sncfDep || !salEntry) return;
-  // Reset complet
-  sncfDep.sncfCorrected = false;
-  // Appliquer
-  const sncfBrut  = sncfDep._brutSaisi || SNCF_DEPENSE;
-  const sncfNet   = Math.max(Math.round((sncfBrut - SNCF_REMB_MONTANT)*100)/100, 0);
-  sncfDep.montant = sncfNet;
-  sncfDep.note    = 'Net après remb. employeur 90% (base 87,60€ · remb. '+fmt(SNCF_REMB_MONTANT)+')';
+
+  const salBrut  = nouveauSalBrut  !== undefined ? nouveauSalBrut  : getSalaireBrut(salEntry);
+  const sncfBrut = nouveauSNCFBrut !== undefined ? nouveauSNCFBrut : getSNCFBrut(sncfDep);
+
+  // Calculer le remboursement employeur sur la base tarifaire SNCF réelle
+  // Base remb = 90% du prix du billet (ici on utilise SNCF_BASE_REMB comme base fixe)
+  const sncfNet  = Math.max(Math.round((sncfBrut - SNCF_REMB_MONTANT)*100)/100, 0);
+  const salCorr  = Math.round((salBrut - SNCF_REMB_MONTANT)*100)/100;
+
+  // Mettre à jour SNCF
+  sncfDep._brutSaisi    = sncfBrut;
+  sncfDep.montant       = sncfNet;
   sncfDep.sncfCorrected = true;
-  const salBrut   = salEntry._brutSaisi;
-  const salCorr   = Math.round((salBrut - SNCF_REMB_MONTANT)*100)/100;
-  salEntry.montant      = salCorr;
+  sncfDep.note          = 'Net après remb. employeur 90% (base 87,60€ · remb. '+fmt(SNCF_REMB_MONTANT)+')';
+
+  // Mettre à jour salaire
+  salEntry._brutSaisi    = salBrut;
+  salEntry.montant       = salCorr;
   salEntry.sncfCorrected = true;
-  salEntry.note   = 'Salaire corrigé · −'+fmt(SNCF_REMB_MONTANT)+' remb. SNCF inclus (brut saisi : '+fmt(salBrut)+')';
+  salEntry.note          = 'Salaire corrigé · −'+fmt(SNCF_REMB_MONTANT)+' remb. SNCF inclus (brut saisi : '+fmt(salBrut)+')';
 }
 
 function confirmEdit(type,idx) {
@@ -717,27 +744,23 @@ function confirmEdit(type,idx) {
   const m=getBudgetMonth(budgetMonth), entry=m[type][idx];
 
   if (type==='revenus' && (entry.sncfCorrected || entry.type==='Salaire')) {
-    // On stocke le brut saisi et on recalcule tout
-    entry._brutSaisi = val;
-    entry.type = 'Salaire';
-    entry.sncfCorrected = true;
-    appliqueCorrectionSNCF(m);
-    const sncfDep = m.depenses.find(d=>d.isSNCF);
-    if (sncfDep) showSncfCorrectionToast(val, entry.montant);
+    // Modification du salaire → val = nouveau brut saisi
+    recalculerSNCF(m, val, undefined);
+    showSncfCorrectionToast(val, entry.montant);
 
   } else if (type==='depenses' && entry.isSNCF) {
-    // On stocke le brut SNCF saisi et on recalcule tout
-    entry._brutSaisi = val;
-    entry.sncfCorrected = false;
-    const salEntry = m.revenus.find(r=>r.sncfCorrected || r._brutSaisi);
+    // Modification de la dépense SNCF → val = nouveau brut SNCF
+    const salEntry = m.revenus.find(r => r.sncfCorrected || r.type==='Salaire');
     if (salEntry) {
-      // Salaire déjà présent → recalcul complet
-      appliqueCorrectionSNCF(m);
-      showSncfCorrectionToast(salEntry._brutSaisi || salEntry.montant, salEntry.montant);
+      // Salaire présent → recalcul complet
+      recalculerSNCF(m, undefined, val);
+      showSncfCorrectionToast(getSalaireBrut(salEntry), salEntry.montant);
     } else {
       // Pas encore de salaire → juste stocker le brut
-      entry.montant = val;
-      entry.note    = '90% remboursé employeur (base 87,60€)';
+      entry._brutSaisi    = val;
+      entry.montant       = val;
+      entry.sncfCorrected = false;
+      entry.note          = '90% remboursé employeur (base 87,60€)';
     }
 
   } else {
