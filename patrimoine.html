@@ -713,7 +713,41 @@ function renderBudget(el) {
     el.appendChild(prefillBanner);
   }
 
+  // ── Calculs objectif glissant (hors template literal) ──
   const gc=s.grind>=0?'var(--cyan)':'var(--red)', sc=s.savings>=0?'var(--green)':'var(--red)';
+  const _annee = budgetMonth.slice(0,4);
+  const _grindAnnuel = getObjectifGrind(_annee);
+  const _moisNum = parseInt(budgetMonth.slice(5,7));
+  let _grindYtd = 0;
+  Object.keys(state.budget||{}).forEach(k => {
+    if (k.startsWith(_annee) && k !== budgetMonth) _grindYtd += budgetStats(k).grind;
+  });
+  const _grindYtdTotal = _grindYtd + s.grind;
+  const _moisDispos = 12 - _moisNum + 1;
+  const _objGlissant = Math.round((_grindAnnuel - _grindYtd) / _moisDispos);
+  const _avance = s.grind - _objGlissant;
+  const _pctObj = Math.min(Math.max(s.grind / _objGlissant * 100, 0), 100);
+  const _couleurObj = s.grind >= _objGlissant ? 'var(--green)' : 'var(--orange)';
+  const _barBg = s.grind >= _objGlissant ? 'linear-gradient(90deg,var(--green),#86efac)' : 'linear-gradient(90deg,var(--orange),#fcd34d)';
+  const _sousTitre = _grindYtd !== 0
+    ? 'cumul ytd ' + fmt(Math.round(_grindYtd)) + ' · ' + _moisDispos + ' mois restants'
+    : 'objectif moyen : ' + fmt(Math.round(_grindAnnuel/12)) + '/mois';
+  const _ligneManque = s.grind < _objGlissant && s.grind > 0
+    ? '<div style="font-size:10px;color:var(--orange);font-family:var(--font-mono);margin-top:5px">encore ' + fmt(_objGlissant - Math.round(s.grind)) + " pour l\'objectif du mois</div>"
+    : '';
+  const _ligneAtteint = s.grind >= _objGlissant
+    ? '<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:5px">✓ objectif atteint · ' + (_avance>=0?'+':'') + fmt(Math.round(_avance)) + " d\'avance</div>"
+    : '';
+  const _ligneYtd = _grindYtd !== 0
+    ? '<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:4px">ytd avec ce mois : ' + (_grindYtdTotal>=0?'+':'') + fmt(Math.round(_grindYtdTotal)) + ' / ' + fmt(_grindAnnuel) + '</div>'
+    : '';
+  const _rembInfo = (s.totalRemb>0||s.correctionSNCF>0)
+    ? '<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:10px">↩ dép. brutes ' + fmt(s.totalDepense)
+      + (s.totalRemb>0 ? ' · remb. manuels −' + fmt(s.totalRemb) : '')
+      + (s.correctionSNCF>0 ? ' · SNCF net −' + fmt(s.correctionSNCF) : '')
+      + ' → <b>net net ' + fmt(s.totalDepNette) + '</b></div>'
+    : '';
+
   const grindCard=document.createElement('div'); grindCard.className='card';
   grindCard.innerHTML=`<div class="card-title">GRIND DU MOIS</div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -726,55 +760,20 @@ function renderBudget(el) {
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
       ${[{l:'Revenus',v:s.totalRevenu,c:'var(--green)'},{l:'Dép. nettes',v:-s.totalDepNette,c:'var(--red)'},{l:'Invest',v:s.investPoche,c:'var(--blue)'},{l:'Tombés ciel',v:s.totalCiel,c:'var(--yellow)'}].map(x=>`<div style="background:var(--bg3);border-radius:10px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--text3);margin-bottom:4px">${x.l}</div><div style="font-size:13px;font-weight:900;font-family:var(--font-d);color:${x.c}">${x.v>=0?'+':''}${Math.round(x.v).toLocaleString('fr-FR')}€</div></div>`).join('')}
     </div>
-    ${(s.totalRemb>0||s.correctionSNCF>0)?`<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:10px">
-      ↩ dép. brutes ${fmt(s.totalDepense)}
-      ${s.totalRemb>0?` · remb. manuels −${fmt(s.totalRemb)}`:''}
-      ${s.correctionSNCF>0?` · SNCF net −${fmt(s.correctionSNCF)}`:''}
-      → <b>net net ${fmt(s.totalDepNette)}</b>
-    </div>`:''}
+    ${_rembInfo}
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-      ${(()=>{
-        const annee = budgetMonth.slice(0,4);
-        const GRIND_ANNUEL = getObjectifGrind(annee);
-        // Calcul du grind cumulé YTD (tous les mois de l'année en cours SAUF le mois affiché)
-        const moisNum = parseInt(budgetMonth.slice(5,7)); // 1-12
-        let grindYtdAvant = 0;
-        Object.keys(state.budget||{}).forEach(k => {
-          if (k.startsWith(annee) && k !== budgetMonth) {
-            grindYtdAvant += budgetStats(k).grind;
-          }
-        });
-        // Grind cumulé en incluant ce mois
-        const grindYtdAvecCeMois = grindYtdAvant + s.grind;
-        // Objectif glissant pour CE mois :
-        // Ce qu'il reste à accumuler sur l'année / mois restants INCLUANT ce mois
-        const moisDispos = 12 - moisNum + 1; // ce mois + les suivants
-        const objectifGlissant = Math.round((GRIND_ANNUEL - grindYtdAvant) / moisDispos);
-        const avance = s.grind - objectifGlissant;
-        const pctObj = Math.min(Math.max(s.grind / objectifGlissant * 100, 0), 100);
-        const couleurObj = s.grind >= objectifGlissant ? 'var(--green)' : 'var(--orange)';
-        const est833 = objectifGlissant === 833;
-        return \`
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-            <div>
-              <div style="display:flex;align-items:center;gap:8px">
-                <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">OBJECTIF GRIND · <span style="color:\${couleurObj};font-weight:700">\${fmt(objectifGlissant)}/mois</span></div>
-                <button onclick="openObjectifModal('\${annee}')" style="background:rgba(94,231,223,0.1);border:1px solid rgba(94,231,223,0.2);border-radius:6px;padding:2px 7px;font-size:9px;color:var(--cyan);cursor:pointer;font-family:var(--font-mono)">✎ \${fmt(GRIND_ANNUEL)}/an</button>
-              </div>
-              <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">
-                \${grindYtdAvant !== 0 ? \`cumul ytd \${fmt(Math.round(grindYtdAvant))} · \${moisDispos} mois restants\` : 'objectif moyen : ' + fmt(Math.round(GRIND_ANNUEL/12)) + '/mois'}
-              </div>
-            </div>
-            <div style="font-size:10px;font-family:var(--font-mono);color:\${couleurObj};text-align:right">
-              \${Math.round(pctObj)}%
-            </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">OBJECTIF · <span style="color:${_couleurObj};font-weight:700">${fmt(_objGlissant)}/mois</span></div>
+            <button onclick="openObjectifModal('${_annee}')" style="background:rgba(94,231,223,0.1);border:1px solid rgba(94,231,223,0.2);border-radius:6px;padding:2px 7px;font-size:9px;color:var(--cyan);cursor:pointer;font-family:var(--font-mono)">✎ ${fmt(_grindAnnuel)}/an</button>
           </div>
-          <div class="bar-track"><div class="bar-fill" style="width:\${pctObj.toFixed(1)}%;background:\${s.grind>=objectifGlissant?'linear-gradient(90deg,var(--green),#86efac)':'linear-gradient(90deg,var(--orange),#fcd34d)'}"></div></div>
-          \${s.grind < objectifGlissant && s.grind > 0 ? \`<div style="font-size:10px;color:var(--orange);font-family:var(--font-mono);margin-top:5px">encore \${fmt(objectifGlissant - Math.round(s.grind))} pour l'objectif du mois</div>\` : ''}
-          \${s.grind >= objectifGlissant ? \`<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:5px">✓ objectif atteint · \${avance>=0?'+':''}\${fmt(Math.round(avance))} d'avance</div>\` : ''}
-          \${grindYtdAvant !== 0 ? \`<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:4px">ytd avec ce mois : \${grindYtdAvecCeMois>=0?'+':''}\${fmt(Math.round(grindYtdAvecCeMois))} / \${fmt(GRIND_ANNUEL)}</div>\` : ''}
-        \`;
-      })()}
+          <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${_sousTitre}</div>
+        </div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:${_couleurObj}">${Math.round(_pctObj)}%</div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${_pctObj.toFixed(1)}%;background:${_barBg}"></div></div>
+      ${_ligneManque}${_ligneAtteint}${_ligneYtd}
     </div>`;
   el.appendChild(grindCard);
 
