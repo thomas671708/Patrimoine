@@ -828,7 +828,34 @@ function editEntry(type, idx) {
 function confirmEdit(type, idx) {
   const val = parseFloat((document.getElementById('edit_montant')?.value||'0').replace(',','.'));
   if (isNaN(val)||val<0) { closeModal(); return; }
-  getBudgetMonth(budgetMonth)[type][idx].montant = val;
+  const m = getBudgetMonth(budgetMonth);
+  const entry = m[type][idx];
+
+  // Cas spécial : modification d'un salaire déjà corrigé SNCF
+  // → on repart du nouveau montant brut saisi et on recalcule proprement
+  if (type === 'revenus' && entry.sncfCorrected) {
+    const sncfDep = m.depenses.find(d => d.isSNCF);
+    if (sncfDep) {
+      // Remettre SNCF à 88€ bruts temporairement
+      sncfDep.montant = SNCF_DEPENSE;
+      sncfDep.note = '90% remboursé employeur (base 87,60€)';
+      sncfDep.sncfCorrected = false;
+    }
+    // Recalculer le salaire corrigé sur la nouvelle base
+    const salaireCorrige = Math.round((val - SNCF_REMB_MONTANT) * 100) / 100;
+    entry.montant = salaireCorrige;
+    entry.note = `Salaire corrigé · −${fmt(SNCF_REMB_MONTANT)} remb. SNCF inclus (brut saisi : ${fmt(val)})`;
+    // Recorriger la dépense SNCF
+    if (sncfDep) {
+      sncfDep.montant = SNCF_NET;
+      sncfDep.note = `Net après remb. employeur 90% (base 87,60€ · remb. ${fmt(SNCF_REMB_MONTANT)})`;
+      sncfDep.sncfCorrected = true;
+    }
+    showSncfCorrectionToast(val, salaireCorrige);
+  } else {
+    entry.montant = val;
+  }
+
   save(); closeModal(); render();
 }
 
