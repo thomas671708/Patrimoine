@@ -573,13 +573,15 @@ function renderBudget(el) {
   const _moisDispos=12-_moisNum+1;
   const _obj=Math.round((_grindAnnuel-_ytd)/_moisDispos);
   const _avance=s.grind-_obj;
-  const _pct=Math.min(Math.max(s.grind/_obj*100,0),100);
   const _cObj=s.grind>=_obj?'var(--green)':'var(--orange)';
-  const _barBg=s.grind>=_obj?'linear-gradient(90deg,var(--green),#86efac)':'linear-gradient(90deg,var(--orange),#fcd34d)';
+  // Barre = YTD cumulé (incluant ce mois) / objectif annuel
+  const _pctYtd=Math.min(Math.max(_ytdTotal/_grindAnnuel*100,0),100);
+  const _ytdPositif=_ytdTotal>=0;
+  const _barBg=_ytdPositif?'linear-gradient(90deg,var(--blue2),var(--cyan))':'linear-gradient(90deg,#7f1d1d,var(--red))';
   const _sousTitre=_ytd!==0?'cumul ytd '+fmt(Math.round(_ytd))+' · '+_moisDispos+' mois restants':'moy. de base : '+fmt(Math.round(_grindAnnuel/12))+'/mois';
   const _ligneManque=s.grind<_obj&&s.grind>0?'<div style="font-size:10px;color:var(--orange);font-family:var(--font-mono);margin-top:5px">encore '+fmt(_obj-Math.round(s.grind))+" pour l'objectif du mois</div>":'';
-  const _ligneAtteint=s.grind>=_obj?'<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:5px">✓ objectif atteint · '+(_avance>=0?'+':'')+fmt(Math.round(_avance))+" d'avance</div>":'';
-  const _ligneYtd=_ytd!==0?'<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:4px">ytd avec ce mois : '+(_ytdTotal>=0?'+':'')+fmt(Math.round(_ytdTotal))+' / '+fmt(_grindAnnuel)+'</div>':'';
+  const _ligneAtteint=s.grind>=_obj?'<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:5px">✓ objectif mensuel atteint · '+(_avance>=0?'+':'')+fmt(Math.round(_avance))+" d'avance</div>":'';
+  const _ligneYtd='<div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:4px">ytd avec ce mois : '+(_ytdTotal>=0?'+':'')+fmt(Math.round(_ytdTotal))+' / '+fmt(_grindAnnuel)+' · <span style="color:'+(_ytdPositif?'var(--cyan)':'var(--red)')+'">'+_pctYtd.toFixed(1)+'% de l'objectif annuel</span></div>';
   const _rembInfo=(s.totalRemb>0||s.correctionSNCF>0)?'<div style="font-size:10px;color:var(--green);font-family:var(--font-mono);margin-top:10px">↩ dép. brutes '+fmt(s.totalDepense)+(s.totalRemb>0?' · remb. manuels −'+fmt(s.totalRemb):'')+(s.correctionSNCF>0?' · SNCF net −'+fmt(s.correctionSNCF):'')+'  →  <b>net net '+fmt(s.totalDepNette)+'</b></div>':'';
 
   const grindCard=document.createElement('div'); grindCard.className='card';
@@ -606,7 +608,9 @@ function renderBudget(el) {
         </div>
         <div style="font-size:10px;font-family:var(--font-mono);color:${_cObj}">${Math.round(_pct)}%</div>
       </div>
-      <div class="bar-track"><div class="bar-fill" style="width:${_pct.toFixed(1)}%;background:${_barBg}"></div></div>
+      <div class="bar-track" style="height:8px;margin-bottom:4px">
+        <div class="bar-fill" style="width:${_pctYtd.toFixed(1)}%;background:${_barBg}"></div>
+      </div>
       ${_ligneManque}${_ligneAtteint}${_ligneYtd}
     </div>`;
   el.appendChild(grindCard);
