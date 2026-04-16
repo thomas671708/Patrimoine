@@ -606,7 +606,7 @@ function renderBudget(el) {
           </div>
           <div style="font-size:9px;color:var(--text3);font-family:var(--font-mono);margin-top:2px">${_sousTitre}</div>
         </div>
-        <div style="font-size:10px;font-family:var(--font-mono);color:${_cObj}">${Math.round(_pct)}%</div>
+        <div style="font-size:10px;font-family:var(--font-mono);color:${_cObj}">${Math.round(s.grind>=0?Math.min(s.grind/_obj*100,999):0)}%</div>
       </div>
       <div class="bar-track" style="height:8px;margin-bottom:4px">
         <div class="bar-fill" style="width:${_pctYtd.toFixed(1)}%;background:${_barBg}"></div>
